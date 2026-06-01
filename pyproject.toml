@@ -1,0 +1,49 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "bcrypt>=5.0.0",
+    "fastapi>=0.136.3",
+    "itsdangerous>=2.2.0",
+    "jinja2>=3.1.6",
+    "pydantic-settings>=2.14.1",
+    "python-multipart>=0.0.30",
+    "sqlalchemy>=2.0.50",
+    "uvicorn>=0.48.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.15.15",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E",   # errores de estilo (PEP 8)
+    "F",   # errores lógicos (variables no usadas, imports no usados)
+    "I",   # orden de imports
+    "N",   # convenciones de nombres (snake_case, PascalCase)
+    "ANN", # type hints faltantes
+    "S",   # seguridad (detecta patrones peligrosos)
+    "UP",  # actualizar sintaxis Python obsoleta
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"] # permitir assert en tests
