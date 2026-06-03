@@ -6,6 +6,11 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import get_settings
 from app.core.database import engine
+from app.core.exceptions import register_exception_handlers
+from app.features.auth import models as _auth_models  # noqa: F401 — registers User in SQLAlchemy metadata
+from app.features.businesses.router import router as businesses_router
+from app.features.campaigns.router import router as campaigns_router
+from app.web.routes import router as web_router
 
 
 @asynccontextmanager
@@ -36,6 +41,12 @@ def create_app() -> FastAPI:
     )
 
     app.mount("/static", StaticFiles(directory="app/web/static"), name="static")
+
+    app.include_router(web_router)
+    app.include_router(campaigns_router)
+    app.include_router(businesses_router)
+
+    register_exception_handlers(app)
 
     return app
 

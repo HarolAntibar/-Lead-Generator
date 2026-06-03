@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Campaigns — Lead Generator{% endblock %}
+
+{% block content %}
+<h2>Campaigns</h2>
+
+<details>
+    <summary>New campaign</summary>
+    <form method="post" action="/campaigns">
+        <label>Name
+            <input type="text" name="name" required placeholder="e.g. Bogota restaurants Q3">
+        </label>
+        <label>Area
+            <input type="text" name="area_text" required placeholder="e.g. Bogota, Colombia">
+        </label>
+        <label>Business type
+            <input type="text" name="business_type" required placeholder="e.g. restaurants">
+        </label>
+        <fieldset>
+            <legend>Location bias (optional)</legend>
+            <div class="grid">
+                <label>Latitude
+                    <input type="number" name="lat" step="any" placeholder="e.g. 4.711">
+                </label>
+                <label>Longitude
+                    <input type="number" name="lng" step="any" placeholder="e.g. -74.072">
+                </label>
+                <label>Radius (m)
+                    <input type="number" name="radius_meters" placeholder="5000">
+                </label>
+            </div>
+        </fieldset>
+        <button type="submit">Create</button>
+    </form>
+</details>
+
+<br>
+
+{% if campaigns %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Area</th>
+            <th>Business type</th>
+            <th>Created</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in campaigns %}
+        <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.area_text }}</td>
+            <td>{{ c.business_type }}</td>
+            <td>{{ c.created_at.strftime("%Y-%m-%d") }}</td>
+            <td><a href="/campaigns/{{ c.id }}">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No campaigns yet. Create one above.</p>
+{% endif %}
+{% endblock %}

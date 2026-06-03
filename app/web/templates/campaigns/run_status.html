@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run.id }} — {{ campaign.name }}{% endblock %}
+
+{% block content %}
+<a href="/campaigns/{{ campaign.id }}">Back to {{ campaign.name }}</a>
+
+<h2>Search run #{{ run.id }}</h2>
+
+<div id="run-status-container">
+    {% include "campaigns/_run_poll.html" %}
+</div>
+{% endblock %}

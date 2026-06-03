@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} — Lead Generator{% endblock %}
+
+{% block content %}
+<a href="/campaigns">Back to campaigns</a>
+
+<h2>{{ campaign.name }}</h2>
+<p>
+    <strong>Area:</strong> {{ campaign.area_text }} &nbsp;
+    <strong>Business type:</strong> {{ campaign.business_type }}
+    {% if campaign.params and campaign.params.location_bias %}
+    &nbsp; <strong>Location bias:</strong>
+    {{ campaign.params.location_bias.lat }}, {{ campaign.params.location_bias.lng }}
+    ({{ campaign.params.location_bias.radius_meters }}m)
+    {% endif %}
+</p>
+
+<form method="post" action="/campaigns/{{ campaign.id }}/runs">
+    <button type="submit">Run search</button>
+</form>
+
+<h3>Search runs</h3>
+{% if runs %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Results</th>
+            <th>New</th>
+            <th>Cost (USD)</th>
+            <th>Started</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for run in runs %}
+        <tr>
+            <td>{{ run.id }}</td>
+            <td class="status-{{ run.status }}">{{ run.status }}</td>
+            <td>{{ run.results_count }}</td>
+            <td>{{ run.new_count }}</td>
+            <td>{% if run.api_cost_est %}${{ "%.4f" | format(run.api_cost_est) }}{% else %}—{% endif %}</td>
+            <td>{{ run.started_at or "—" }}</td>
+            <td><a href="/campaigns/{{ campaign.id }}/runs/{{ run.id }}">Detail</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No runs yet. Click "Run search" to start.</p>
+{% endif %}
+{% endblock %}

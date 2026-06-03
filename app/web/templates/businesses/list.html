@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Businesses — Lead Generator{% endblock %}
+
+{% block content %}
+<h2>Businesses</h2>
+
+<nav>
+    Sort by:
+    <a href="#"
+       hx-get="/businesses/table?sort_by=name{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
+       hx-target="#businesses-table"
+       hx-swap="outerHTML"
+       class="{% if sort_by == 'name' %}sort-active{% endif %}">
+        Name
+    </a>
+    &nbsp;|&nbsp;
+    <a href="#"
+       hx-get="/businesses/table?sort_by=rating{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
+       hx-target="#businesses-table"
+       hx-swap="outerHTML"
+       class="{% if sort_by == 'rating' %}sort-active{% endif %}">
+        Rating
+    </a>
+    &nbsp;|&nbsp;
+    {% if ref_lat and ref_lng %}
+    <a href="#"
+       hx-get="/businesses/table?sort_by=distance&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}"
+       hx-target="#businesses-table"
+       hx-swap="outerHTML"
+       class="{% if sort_by == 'distance' %}sort-active{% endif %}">
+        Distance
+    </a>
+    {% else %}
+    <span title="Provide a location bias in the campaign to sort by distance" style="color: var(--pico-color-grey-400)">
+        Distance (no reference point)
+    </span>
+    {% endif %}
+</nav>
+
+<br>
+
+{% include "businesses/_table.html" %}
+{% endblock %}

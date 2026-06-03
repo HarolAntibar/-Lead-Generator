@@ -1,0 +1,35 @@
+<table id="businesses-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Reviews</th>
+            <th>Website</th>
+            <th>Phone</th>
+            <th>Address</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in businesses %}
+        <tr>
+            <td>{{ b.name }}</td>
+            <td>{{ b.category or "—" }}</td>
+            <td>{{ b.rating or "—" }}</td>
+            <td>{{ b.reviews_count or "—" }}</td>
+            <td>
+                {% if b.has_website %}
+                <a href="{{ b.website_url }}" target="_blank" rel="noopener">Link</a>
+                {% else %}
+                <span style="color: var(--pico-color-orange-500)">No website</span>
+                {% endif %}
+            </td>
+            <td>{{ b.phone_raw or "—" }}</td>
+            <td>{{ b.address or "—" }}</td>
+        </tr>
+        {% endfor %}
+        {% if not businesses %}
+        <tr><td colspan="7">No businesses found. Run a search first.</td></tr>
+        {% endif %}
+    </tbody>
+</table>

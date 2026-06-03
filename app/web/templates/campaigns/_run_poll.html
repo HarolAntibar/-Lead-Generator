@@ -1,0 +1,36 @@
+{% if run.status in ["pending", "running"] %}
+<div id="run-poll"
+     hx-get="/campaigns/{{ campaign_id }}/runs/{{ run.id }}/poll"
+     hx-trigger="every 2s"
+     hx-swap="outerHTML">
+    <p class="status-{{ run.status }}">
+        <span class="spinner"></span>
+        Status: <strong>{{ run.status }}</strong>
+    </p>
+    <p>Searching Google Places — this may take a few seconds...</p>
+</div>
+{% else %}
+<div id="run-poll">
+    <p class="status-{{ run.status }}">
+        Status: <strong>{{ run.status }}</strong>
+    </p>
+    {% if run.status == "done" %}
+    <table>
+        <tr><th>Results found</th><td>{{ run.results_count }}</td></tr>
+        <tr><th>New businesses</th><td>{{ run.new_count }}</td></tr>
+        <tr><th>Already known</th><td>{{ run.results_count - run.new_count }}</td></tr>
+        {% if run.api_cost_est %}
+        <tr><th>API cost</th><td>${{ "%.4f" | format(run.api_cost_est) }}</td></tr>
+        {% endif %}
+        {% if run.finished_at %}
+        <tr><th>Finished</th><td>{{ run.finished_at }}</td></tr>
+        {% endif %}
+    </table>
+    <br>
+    <a href="/businesses?sort_by=name" role="button">View businesses</a>
+    {% endif %}
+    {% if run.status == "error" %}
+    <p>{{ run.error }}</p>
+    {% endif %}
+</div>
+{% endif %}
