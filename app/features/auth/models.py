@@ -8,7 +8,7 @@ from app.core.database import Base, TimestampMixin
 
 class UserRole(str, enum.Enum):
     admin = "admin"
-    vendedor = "vendedor"
+    seller = "seller"
 
 
 class User(TimestampMixin, Base):

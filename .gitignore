@@ -1,6 +1,9 @@
 # Secrets — never commit
 .env
 
+# Internal design documents — not for public exposure
+PLAN.md
+
 # Virtual environment
 .venv/
 

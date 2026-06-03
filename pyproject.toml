@@ -35,15 +35,15 @@ target-version = "py314"
 
 [tool.ruff.lint]
 select = [
-    "E",   # errores de estilo (PEP 8)
-    "F",   # errores lógicos (variables no usadas, imports no usados)
-    "I",   # orden de imports
-    "N",   # convenciones de nombres (snake_case, PascalCase)
-    "ANN", # type hints faltantes
-    "S",   # seguridad (detecta patrones peligrosos)
-    "UP",  # actualizar sintaxis Python obsoleta
+    "E",   # style errors (PEP 8)
+    "F",   # logic errors (unused variables, unused imports)
+    "I",   # import ordering
+    "N",   # naming conventions (snake_case, PascalCase)
+    "ANN", # missing type hints
+    "S",   # security (detects dangerous patterns)
+    "UP",  # upgrade outdated Python syntax
 ]
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"] # permitir assert en tests
+"tests/*" = ["S101"] # allow assert in tests
