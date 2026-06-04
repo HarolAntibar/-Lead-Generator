@@ -41,18 +41,33 @@ async def update_status(
     business_id: int,
     payload: LeadStatusUpdate,
 ) -> LeadStatus | None:
-    # Only touch assigned_to if the client explicitly sent it in the request body.
-    # model_fields_set contains the names of fields that were actually provided —
-    # if assigned_to is absent from the JSON, we leave the current assignment untouched.
+    # Only touch assigned_to / notes if the client explicitly sent those fields.
+    # model_fields_set tracks which fields were actually present in the request —
+    # absent fields leave the current DB value untouched (e.g. inline list dropdown
+    # only sends 'status' and must not wipe the salesperson's notes).
     update_assignment = "assigned_to" in payload.model_fields_set
+    update_notes = "notes" in payload.model_fields_set
     return await leads_repo.update_lead_status(
         session,
         business_id=business_id,
         status=payload.status,
         notes=payload.notes,
         update_assignment=update_assignment,
+        update_notes=update_notes,
         assigned_to=payload.assigned_to if update_assignment else None,
     )
+
+
+async def get_dashboard_stats(session: AsyncSession) -> dict:
+    return await leads_repo.get_stats(session)
+
+
+async def get_lead_or_404(session: AsyncSession, business_id: int) -> LeadOut:
+    row = await leads_repo.get_single_lead(session, business_id)
+    if row is None:
+        from app.features.leads.exceptions import LeadScoreNotFound
+        raise LeadScoreNotFound(business_id)
+    return LeadOut(**row)
 
 
 async def list_leads(

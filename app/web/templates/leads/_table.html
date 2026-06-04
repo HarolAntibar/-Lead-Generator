@@ -1,0 +1,24 @@
+<div id="leads-table">
+{% if leads %}
+<table>
+  <thead>
+    <tr>
+      <th>Business</th>
+      <th>Category</th>
+      <th>Score</th>
+      <th>Opportunity</th>
+      <th>Status</th>
+      <th>Website</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lead in leads %}
+      {% include "leads/_row.html" %}
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No leads found. Run a campaign search first.</p>
+{% endif %}
+</div>

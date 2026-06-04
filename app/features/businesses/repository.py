@@ -153,6 +153,16 @@ async def get_website_analysis(
     return result.scalar_one_or_none()
 
 
+async def get_contacts(
+    session: AsyncSession,
+    business_id: int,
+) -> list[Contact]:
+    result = await session.execute(
+        select(Contact).where(Contact.business_id == business_id)
+    )
+    return list(result.scalars().all())
+
+
 async def save_contacts(
     session: AsyncSession,
     business_id: int,

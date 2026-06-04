@@ -23,7 +23,33 @@
         .status-done     { color: var(--pico-color-green-500); }
         .status-error    { color: var(--pico-color-red-500); }
         .sort-active     { font-weight: bold; text-decoration: underline; }
+
+        /* Lead status badges */
+        .lead-new        { color: var(--pico-color-grey-500); }
+        .lead-contacted  { color: var(--pico-color-blue-500); }
+        .lead-interested { color: var(--pico-color-green-500); }
+        .lead-discarded  { color: var(--pico-color-red-400); }
+        .lead-client     { color: var(--pico-color-green-700); font-weight: bold; }
+
+        /* Score badges */
+        .score-high   { color: var(--pico-color-green-600); font-weight: bold; }
+        .score-medium { color: var(--pico-color-orange-500); font-weight: bold; }
+        .score-low    { color: var(--pico-color-grey-500); }
+
+        /* Opportunity type badges */
+        .opp-website    { color: var(--pico-color-blue-600); }
+        .opp-automation { color: var(--pico-color-purple-600); }
+        .opp-both       { color: var(--pico-color-orange-600); }
+        .opp-low        { color: var(--pico-color-grey-400); }
+
+        /* Score breakdown collapsible */
+        details.score-breakdown summary { cursor: pointer; list-style: none; }
+        details.score-breakdown summary::-webkit-details-marker { display: none; }
+        details.score-breakdown[open] { background: var(--pico-card-background-color); border-radius: 4px; padding: 0.5rem; }
+        .breakdown-table { width: 100%; font-size: 0.8rem; margin-top: 0.4rem; }
+        .breakdown-table td { padding: 0.15rem 0.3rem; }
     </style>
+    {% block extra_style %}{% endblock %}
 </head>
 <body>
     <header class="container">
@@ -32,6 +58,7 @@
             <ul>
                 <li><a href="/campaigns">Campaigns</a></li>
                 <li><a href="/businesses">Businesses</a></li>
+                <li><a href="/leads">Leads</a></li>
             </ul>
         </nav>
     </header>

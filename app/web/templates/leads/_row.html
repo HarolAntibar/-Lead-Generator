@@ -1,0 +1,68 @@
+<tr id="lead-row-{{ lead.business_id }}">
+  <td><strong>{{ lead.name }}</strong></td>
+  <td>{{ lead.category or "—" }}</td>
+  <td>
+    {% set score = lead.score %}
+    {% if score >= 70 %}
+      {% set score_class = "score-high" %}
+    {% elif score >= 40 %}
+      {% set score_class = "score-medium" %}
+    {% else %}
+      {% set score_class = "score-low" %}
+    {% endif %}
+
+    <details class="score-breakdown">
+      <summary class="{{ score_class }}">{{ score }}</summary>
+      {% if lead.breakdown and lead.breakdown.components %}
+      <table class="breakdown-table">
+        {% for name, comp in lead.breakdown.components.items() %}
+        <tr>
+          <td>{{ name | replace("_", " ") | capitalize }}</td>
+          <td>{{ comp.points }}/{{ comp.max }}</td>
+          <td style="color:var(--pico-color-grey-500);">{{ comp.reason }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% endif %}
+    </details>
+  </td>
+  <td>
+    {% set ot = lead.opportunity_type or "—" %}
+    {% if ot == "website" %}
+      <span class="opp-website">website</span>
+    {% elif ot == "automation" %}
+      <span class="opp-automation">automation</span>
+    {% elif ot == "both" %}
+      <span class="opp-both">both</span>
+    {% elif ot == "low" %}
+      <span class="opp-low">low</span>
+    {% else %}
+      {{ ot }}
+    {% endif %}
+  </td>
+  <td>
+    <select
+      name="status"
+      hx-patch="/leads/{{ lead.business_id }}/status"
+      hx-target="#lead-row-{{ lead.business_id }}"
+      hx-swap="outerHTML"
+      hx-include="this"
+      class="lead-{{ lead.status.value }}"
+      style="border:none; background:transparent; padding:0; font-size:inherit; cursor:pointer;"
+    >
+      {% for s in all_statuses %}
+        <option value="{{ s.value }}" {% if s == lead.status %}selected{% endif %}>
+          {{ s.value | capitalize }}
+        </option>
+      {% endfor %}
+    </select>
+  </td>
+  <td>
+    {% if lead.website_url %}
+      <a href="{{ lead.website_url }}" target="_blank" rel="noopener">Link</a>
+    {% else %}
+      <span style="color:var(--pico-color-orange-500);">No website</span>
+    {% endif %}
+  </td>
+  <td><a href="/leads/{{ lead.business_id }}" role="button" class="outline" style="padding:0.2rem 0.6rem; font-size:0.85rem;">Ver</a></td>
+</tr>

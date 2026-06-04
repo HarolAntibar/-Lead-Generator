@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.features.businesses import repository
 from app.features.businesses.constants import BusinessSortBy
 from app.features.businesses.exceptions import BusinessNotFoundError
-from app.features.businesses.models import Business
+from app.features.businesses.models import Business, Contact, WebsiteAnalysis
 from app.integrations.google.client import PlaceResult
 
 
@@ -20,6 +20,20 @@ async def get_business_or_404(session: AsyncSession, business_id: int) -> Busine
     if not business:
         raise BusinessNotFoundError(business_id)
     return business
+
+
+async def get_website_analysis(
+    session: AsyncSession,
+    business_id: int,
+) -> WebsiteAnalysis | None:
+    return await repository.get_website_analysis(session, business_id)
+
+
+async def get_contacts(
+    session: AsyncSession,
+    business_id: int,
+) -> list[Contact]:
+    return await repository.get_contacts(session, business_id)
 
 
 async def list_businesses(

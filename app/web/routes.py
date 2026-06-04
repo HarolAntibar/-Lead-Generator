@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -8,15 +10,31 @@ from app.features.businesses.constants import BusinessSortBy
 from app.features.campaigns import repository as campaign_repo
 from app.features.campaigns import service as campaign_service
 from app.features.campaigns.schemas import CampaignCreate
+from app.features.drafts import service as drafts_service
+from app.features.leads import service as leads_service
+from app.features.leads.models import LeadStatusChoice
+from app.features.leads.schemas import LeadStatusUpdate
 from app.pipeline import orchestrator
 
 templates = Jinja2Templates(directory="app/web/templates")
 router = APIRouter(tags=["web"])
 
 
-@router.get("/", response_class=RedirectResponse)
-async def home() -> RedirectResponse:
-    return RedirectResponse(url="/campaigns")
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request, session: SessionDep) -> HTMLResponse:
+    stats = await leads_service.get_dashboard_stats(session)
+    top_leads = await leads_service.list_leads(
+        session, page=1, size=5, has_website=None,
+    )
+    recent_runs = await campaign_repo.list_recent_runs(session, limit=5)
+    return templates.TemplateResponse(request, "home.html", {
+        "stats": stats,
+        "top_leads": top_leads,
+        "recent_runs": recent_runs,
+        "today": date.today().strftime("%A, %d %b %Y"),
+        "all_statuses": [s.value for s in LeadStatusChoice],
+        "all_opp_types": ["website", "both", "automation", "low"],
+    })
 
 
 @router.get("/campaigns", response_class=HTMLResponse)
@@ -116,6 +134,114 @@ async def businesses_page(
         request,
         "businesses/list.html",
         {"businesses": businesses, "sort_by": sort_by, "ref_lat": ref_lat, "ref_lng": ref_lng},
+    )
+
+
+@router.get("/leads", response_class=HTMLResponse)
+async def leads_page(
+    request: Request,
+    session: SessionDep,
+    status: LeadStatusChoice | None = None,
+    opportunity_type: str | None = None,
+) -> HTMLResponse:
+    leads = await leads_service.list_leads(
+        session, page=1, size=100,
+        has_website=None, status=status, opportunity_type=opportunity_type,
+    )
+    return templates.TemplateResponse(
+        request, "leads/list.html", {
+            "leads": leads,
+            "status_filter": status,
+            "opportunity_type_filter": opportunity_type,
+            "all_statuses": list(LeadStatusChoice),
+            "all_opportunity_types": ["website", "automation", "both", "low"],
+        },
+    )
+
+
+@router.get("/leads/table", response_class=HTMLResponse)
+async def leads_table(
+    request: Request,
+    session: SessionDep,
+    status: LeadStatusChoice | None = None,
+    opportunity_type: str | None = None,
+) -> HTMLResponse:
+    leads = await leads_service.list_leads(
+        session, page=1, size=100,
+        has_website=None, status=status, opportunity_type=opportunity_type,
+    )
+    return templates.TemplateResponse(
+        request, "leads/_table.html", {
+            "leads": leads,
+            "status_filter": status,
+            "opportunity_type_filter": opportunity_type,
+            "all_statuses": list(LeadStatusChoice),
+        },
+    )
+
+
+@router.patch("/leads/{business_id}/status", response_class=HTMLResponse)
+async def update_lead_status_inline(
+    request: Request,
+    business_id: int,
+    session: SessionDep,
+) -> HTMLResponse:
+    """HTMX endpoint: inline status dropdown in the leads list.
+
+    Receives form data with only 'status' — notes are intentionally NOT
+    included so the salesperson's existing notes are preserved.
+    """
+    form = await request.form()
+    status_str = str(form["status"])
+    payload = LeadStatusUpdate(status=LeadStatusChoice(status_str))
+    await leads_service.update_status(session, business_id, payload)
+    lead = await leads_service.get_lead_or_404(session, business_id)
+    return templates.TemplateResponse(
+        request, "leads/_row.html", {
+            "lead": lead,
+            "all_statuses": list(LeadStatusChoice),
+        },
+    )
+
+
+@router.post("/leads/{business_id}/status", response_class=RedirectResponse)
+async def update_lead_status_form(
+    request: Request,
+    business_id: int,
+    session: SessionDep,
+) -> RedirectResponse:
+    """Form POST from the lead detail page — saves status + notes together."""
+    form = await request.form()
+    status_str = str(form["status"])
+    notes = form.get("notes")
+    payload = LeadStatusUpdate(
+        status=LeadStatusChoice(status_str),
+        notes=str(notes) if notes else None,
+    )
+    await leads_service.update_status(session, business_id, payload)
+    return RedirectResponse(url=f"/leads/{business_id}", status_code=303)
+
+
+@router.get("/leads/{business_id}", response_class=HTMLResponse)
+async def lead_detail(
+    request: Request,
+    business_id: int,
+    session: SessionDep,
+) -> HTMLResponse:
+    lead = await leads_service.get_lead_or_404(session, business_id)
+    business = await business_service.get_business_or_404(session, business_id)
+    analysis = await business_service.get_website_analysis(session, business_id)
+    contacts = await business_service.get_contacts(session, business_id)
+    drafts = await drafts_service.list_drafts(session, business_id)
+    return templates.TemplateResponse(
+        request, "leads/detail.html", {
+            "lead": lead,
+            "business": business,
+            "analysis": analysis,
+            "contacts": contacts,
+            "drafts": drafts,
+            "all_statuses": list(LeadStatusChoice),
+        },
     )
 
 

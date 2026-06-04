@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import Float, cast, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.features.businesses.models import Business
 from app.features.leads.models import LeadScore, LeadStatus, LeadStatusChoice
 
 
@@ -79,6 +80,7 @@ async def update_lead_status(
     status: LeadStatusChoice,
     notes: str | None,
     update_assignment: bool = False,
+    update_notes: bool = False,
     assigned_to: int | None = None,
 ) -> LeadStatus | None:
     row = await session.execute(
@@ -88,7 +90,10 @@ async def update_lead_status(
     if lead_status is None:
         return None
     lead_status.status = status
-    lead_status.notes = notes
+    # Only overwrite notes if the caller explicitly included it in the request.
+    # Inline list updates only send status — we must not wipe existing notes.
+    if update_notes:
+        lead_status.notes = notes
     if update_assignment:
         lead_status.assigned_to = assigned_to
     await session.commit()
@@ -101,6 +106,65 @@ async def get_lead_score(session: AsyncSession, business_id: int) -> LeadScore |
         select(LeadScore).where(LeadScore.business_id == business_id)
     )
     return result.scalar_one_or_none()
+
+
+async def get_stats(session: AsyncSession) -> dict:
+    """Return aggregate counts for the home page dashboard.
+
+    Three queries: total leads, count per CRM status, count per opportunity type.
+    Kept as separate queries (not a single GROUP BY ROLLUP) for clarity — the
+    result sets are tiny so there is no meaningful performance difference.
+    """
+    from sqlalchemy import func
+
+    total = (await session.execute(
+        select(func.count()).select_from(LeadScore)
+    )).scalar_one()
+
+    status_rows = (await session.execute(
+        select(LeadStatus.status, func.count().label("cnt"))
+        .group_by(LeadStatus.status)
+    )).all()
+    by_status = {row.status.value: row.cnt for row in status_rows}
+
+    opp_rows = (await session.execute(
+        select(
+            LeadScore.breakdown["opportunity_type"].as_string().label("opp_type"),
+            func.count().label("cnt"),
+        ).group_by("opp_type")
+    )).all()
+    by_opp_type = {row.opp_type: row.cnt for row in opp_rows if row.opp_type}
+
+    return {"total": total, "by_status": by_status, "by_opp_type": by_opp_type}
+
+
+def _leads_select_query():
+    """Base SELECT joining businesses + lead_scores + lead_status.
+
+    Extracted so list_leads and get_single_lead share the same column set
+    without duplicating the join definition.
+    """
+    return (
+        select(
+            Business.id.label("business_id"),
+            Business.name,
+            Business.category,
+            Business.has_website,
+            Business.website_url,
+            cast(Business.rating, Float).label("rating"),
+            Business.reviews_count,
+            LeadScore.score,
+            LeadScore.breakdown,
+            LeadScore.breakdown["opportunity_type"].as_string().label("opportunity_type"),
+            LeadScore.computed_at,
+            LeadStatus.status,
+            LeadStatus.notes,
+            LeadStatus.assigned_to,
+        )
+        .join(LeadScore, LeadScore.business_id == Business.id)
+        .join(LeadStatus, LeadStatus.business_id == Business.id)
+        .order_by(LeadScore.score.desc())
+    )
 
 
 async def list_leads(
@@ -117,28 +181,7 @@ async def list_leads(
     separate ORM trees per lead. opportunity_type is extracted from the
     breakdown JSONB column using PostgreSQL's -> operator.
     """
-    from sqlalchemy import Float, cast
-    from app.features.businesses.models import Business
-
-    query = (
-        select(
-            Business.id.label("business_id"),
-            Business.name,
-            Business.category,
-            Business.has_website,
-            Business.website_url,
-            cast(Business.rating, Float).label("rating"),
-            Business.reviews_count,
-            LeadScore.score,
-            LeadScore.breakdown,
-            LeadScore.breakdown["opportunity_type"].as_string().label("opportunity_type"),
-            LeadScore.computed_at,
-            LeadStatus.status,
-        )
-        .join(LeadScore, LeadScore.business_id == Business.id)
-        .join(LeadStatus, LeadStatus.business_id == Business.id)
-        .order_by(LeadScore.score.desc())
-    )
+    query = _leads_select_query()
 
     if has_website is not None:
         query = query.where(Business.has_website == has_website)
@@ -154,3 +197,14 @@ async def list_leads(
 
     result = await session.execute(query)
     return [row._asdict() for row in result.all()]
+
+
+async def get_single_lead(
+    session: AsyncSession,
+    business_id: int,
+) -> dict | None:
+    """Return the combined lead row for one business, or None if not scored yet."""
+    query = _leads_select_query().where(Business.id == business_id)
+    result = await session.execute(query)
+    row = result.one_or_none()
+    return row._asdict() if row is not None else None

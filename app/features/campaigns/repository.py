@@ -67,6 +67,28 @@ async def list_search_runs_by_campaign(
     return list(result.scalars().all())
 
 
+async def list_recent_runs(
+    session: AsyncSession,
+    limit: int = 5,
+) -> list[dict]:
+    """Return the most recent search runs with their campaign names."""
+    result = await session.execute(
+        select(
+            SearchRun.id.label("run_id"),
+            SearchRun.status,
+            SearchRun.results_count,
+            SearchRun.new_count,
+            SearchRun.created_at,
+            Campaign.id.label("campaign_id"),
+            Campaign.name.label("campaign_name"),
+        )
+        .join(Campaign, SearchRun.campaign_id == Campaign.id)
+        .order_by(SearchRun.created_at.desc())
+        .limit(limit)
+    )
+    return [row._asdict() for row in result.all()]
+
+
 async def update_search_run(session: AsyncSession, run: SearchRun, **fields: object) -> SearchRun:
     for key, value in fields.items():
         setattr(run, key, value)

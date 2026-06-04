@@ -43,4 +43,6 @@ class LeadOut(BaseModel):
     breakdown: dict | None
     opportunity_type: str | None
     status: LeadStatusChoice
+    notes: str | None
+    assigned_to: int | None
     computed_at: datetime | None

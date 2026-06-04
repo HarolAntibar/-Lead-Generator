@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.name }} — Lead Generator{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="/leads">Leads</a></li>
+    <li>{{ lead.name }}</li>
+  </ul>
+</nav>
+
+<div class="grid">
+
+  {# ── Left column: business info + website analysis + contacts ── #}
+  <div>
+    <hgroup>
+      <h2>{{ lead.name }}</h2>
+      <p>{{ lead.category or "—" }}</p>
+    </hgroup>
+
+    <table>
+      <tr><th>Address</th><td>{{ business.address or "—" }}</td></tr>
+      <tr><th>Phone</th><td>{{ business.phone_e164 or business.phone_raw or "—" }}</td></tr>
+      <tr>
+        <th>Website</th>
+        <td>
+          {% if business.website_url %}
+            <a href="{{ business.website_url }}" target="_blank" rel="noopener">{{ business.website_url }}</a>
+          {% else %}
+            <span style="color:var(--pico-color-orange-500);">No website</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Rating</th>
+        <td>
+          {% if business.rating %}
+            {{ "%.1f" | format(business.rating | float) }} ({{ business.reviews_count or 0 }} reviews)
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
+    {% if analysis %}
+    <h4>Website analysis</h4>
+    <table>
+      <tr><th>CMS / Stack</th><td>{{ analysis.cms_detected or "—" }}</td></tr>
+      <tr><th>Chat widget</th><td>{{ "Yes" if analysis.has_chat else "No" }}</td></tr>
+      <tr><th>Booking</th><td>{{ "Yes" if analysis.has_booking else "No" }}</td></tr>
+      <tr><th>Freshness</th><td>{{ analysis.freshness_signal or "—" }}</td></tr>
+      <tr><th>Quality score</th><td>{{ analysis.quality_score if analysis.quality_score is not none else "—" }}</td></tr>
+    </table>
+    {% endif %}
+
+    {% if contacts %}
+    <h4>Contacts</h4>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Source</th></tr></thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr>
+          <td>{{ c.name or "—" }}</td>
+          <td>{{ c.email or "—" }}</td>
+          <td>{{ c.role or "—" }}</td>
+          <td style="font-size:0.8rem; color:var(--pico-color-grey-500);">{{ c.source.value if c.source else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  {# ── Right column: score + CRM + drafts ── #}
+  <div>
+
+    {# Score card #}
+    <article>
+      <header>
+        <strong>Viability score</strong>
+        &nbsp;
+        {% set ot = lead.opportunity_type or "—" %}
+        {% if ot == "website" %}<span class="opp-website">website</span>
+        {% elif ot == "automation" %}<span class="opp-automation">automation</span>
+        {% elif ot == "both" %}<span class="opp-both">both</span>
+        {% elif ot == "low" %}<span class="opp-low">low</span>
+        {% else %}{{ ot }}{% endif %}
+      </header>
+
+      {% set score = lead.score %}
+      {% if score >= 70 %}
+        <p style="font-size:2.5rem; margin:0;" class="score-high">{{ score }}<small>/100</small></p>
+      {% elif score >= 40 %}
+        <p style="font-size:2.5rem; margin:0;" class="score-medium">{{ score }}<small>/100</small></p>
+      {% else %}
+        <p style="font-size:2.5rem; margin:0;" class="score-low">{{ score }}<small>/100</small></p>
+      {% endif %}
+
+      {% if lead.breakdown and lead.breakdown.components %}
+      <details class="score-breakdown">
+        <summary>Breakdown</summary>
+        <table class="breakdown-table">
+          {% for name, comp in lead.breakdown.components.items() %}
+          <tr>
+            <td>{{ name | replace("_", " ") | capitalize }}</td>
+            <td><strong>{{ comp.points }}</strong>/{{ comp.max }}</td>
+            <td style="color:var(--pico-color-grey-500);">{{ comp.reason }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </details>
+      {% endif %}
+    </article>
+
+    {# CRM section #}
+    <article>
+      <header><strong>CRM</strong></header>
+      <form method="post" action="/leads/{{ lead.business_id }}/status">
+        <label>
+          Status
+          <select name="status">
+            {% for s in all_statuses %}
+              <option value="{{ s.value }}" {% if s == lead.status %}selected{% endif %}>
+                {{ s.value | capitalize }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Notes
+          <textarea name="notes" rows="4" placeholder="Add notes about this lead...">{{ lead.notes or "" }}</textarea>
+        </label>
+        <button type="submit">Save</button>
+      </form>
+    </article>
+
+    {# Message drafts #}
+    <article>
+      <header><strong>Message drafts</strong></header>
+      {% if drafts %}
+        {% for draft in drafts %}
+        <details>
+          <summary>
+            {{ draft.channel.value | capitalize }}
+            {% if draft.subject %} — {{ draft.subject }}{% endif %}
+            <small style="color:var(--pico-color-grey-500);">{{ draft.created_at.strftime('%d %b %Y') if draft.created_at else "" }}</small>
+          </summary>
+          {% if draft.subject %}<p><strong>Subject:</strong> {{ draft.subject }}</p>{% endif %}
+          <pre style="white-space:pre-wrap; font-size:0.85rem;">{{ draft.body }}</pre>
+        </details>
+        {% endfor %}
+      {% else %}
+        <p style="color:var(--pico-color-grey-500);">No drafts yet.</p>
+      {% endif %}
+      <a href="/api/drafts/{{ lead.business_id }}" role="button" class="outline" style="font-size:0.85rem;">Generate draft (API)</a>
+    </article>
+
+  </div>
+</div>
+{% endblock %}

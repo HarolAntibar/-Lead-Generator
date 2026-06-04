@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Overview — Lead Generator{% endblock %}
+
+{% block extra_style %}
+<style>
+  .brief-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--pico-color-grey-500);
+    margin: 0;
+  }
+  .brief-hero-number {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0;
+  }
+  .brief-hero-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pico-color-grey-500);
+    margin: 0.3rem 0 0 0;
+  }
+  .brief-section-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pico-color-grey-400);
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--pico-table-border-color);
+  }
+  .brief-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--pico-table-border-color);
+    font-size: 0.9rem;
+  }
+  .brief-row:last-child { border-bottom: none; }
+  .brief-num {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 2.2rem;
+    text-align: right;
+  }
+  .brief-rank {
+    font-size: 0.75rem;
+    color: var(--pico-color-grey-400);
+    min-width: 1.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .brief-lead-name {
+    flex: 1;
+    margin: 0 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+  .brief-run-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--pico-table-border-color);
+    font-size: 0.88rem;
+  }
+  .brief-run-row:last-child { border-bottom: none; }
+  .brief-run-name { flex: 1; font-weight: 500; }
+  .brief-run-meta { color: var(--pico-color-grey-500); font-size: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Top bar: hero number left, date + CTA right ── #}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem;">
+  <div>
+    <p class="brief-date">{{ today }}</p>
+    <p class="brief-hero-number">{{ stats.total }}</p>
+    <p class="brief-hero-label">leads in pipeline</p>
+  </div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem; padding-top:0.25rem;">
+    <a href="/campaigns" role="button" style="padding:0.4rem 1rem; font-size:0.85rem;">+ New campaign</a>
+    <a href="/leads" style="font-size:0.8rem; color:var(--pico-color-grey-500);">View all leads →</a>
+  </div>
+</div>
+
+{# ── Main grid: pipeline status + top opportunities ── #}
+<div class="grid" style="margin-bottom:1.5rem;">
+
+  <article style="margin:0;">
+    <p class="brief-section-label">Pipeline</p>
+    {% for s in all_statuses %}
+    {% set count = stats.by_status.get(s, 0) %}
+    <div class="brief-row">
+      <span class="lead-{{ s }}">{{ s | capitalize }}</span>
+      <span class="brief-num {% if count == 0 %}style="color:var(--pico-color-grey-400)"{% endif %}">
+        {{ count }}
+      </span>
+    </div>
+    {% endfor %}
+    <div class="brief-row" style="margin-top:0.5rem; border-top:1px solid var(--pico-table-border-color);">
+      <span style="color:var(--pico-color-grey-500); font-size:0.8rem;">Total</span>
+      <span class="brief-num">{{ stats.total }}</span>
+    </div>
+  </article>
+
+  <article style="margin:0;">
+    <p class="brief-section-label">Top opportunities</p>
+    {% if top_leads %}
+      {% for lead in top_leads %}
+      <div class="brief-row">
+        <span class="brief-rank">{{ loop.index }}</span>
+        <a href="/leads/{{ lead.business_id }}" class="brief-lead-name" style="text-decoration:none; color:inherit;">
+          {{ lead.name }}
+        </a>
+        <span class="brief-num {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+          {{ lead.score }}
+        </span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--pico-color-grey-400); font-size:0.88rem;">No leads scored yet. Run a campaign first.</p>
+    {% endif %}
+  </article>
+
+</div>
+
+{# ── Opportunity breakdown (narrow, left-aligned) ── #}
+<article style="margin:0 0 1.5rem 0; max-width:340px;">
+  <p class="brief-section-label">By opportunity type</p>
+  {% for ot in all_opp_types %}
+  {% set count = stats.by_opp_type.get(ot, 0) %}
+  <div class="brief-row">
+    <span class="opp-{{ ot }}">{{ ot | capitalize }}</span>
+    <span class="brief-num">{{ count }}</span>
+  </div>
+  {% endfor %}
+</article>
+
+{# ── Recent runs ── #}
+<article style="margin:0;">
+  <p class="brief-section-label">Recent runs</p>
+  {% if recent_runs %}
+    {% for run in recent_runs %}
+    <div class="brief-run-row">
+      <span class="brief-run-name">{{ run.campaign_name }}</span>
+      <span class="brief-run-meta status-{{ run.status.value }}">{{ run.status.value }}</span>
+      <span class="brief-run-meta">{{ run.results_count }} results · {{ run.new_count }} new</span>
+      <a href="/campaigns/{{ run.campaign_id }}/runs/{{ run.run_id }}" style="font-size:0.8rem;">View →</a>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p style="color:var(--pico-color-grey-400); font-size:0.88rem;">No runs yet. Start your first campaign.</p>
+  {% endif %}
+</article>
+
+{% endblock %}
