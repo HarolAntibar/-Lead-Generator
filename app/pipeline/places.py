@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.features.businesses import service as businesses_service
 from app.features.campaigns.models import Campaign
 from app.integrations.google.client import GooglePlacesClient, LocationBias
@@ -29,6 +30,14 @@ async def run(
     logger.info("Places stage: querying '%s'", query)
     client = GooglePlacesClient()
     places = await client.search_places(query, location_bias)
+
+    limit = get_settings().max_places_per_run
+    if len(places) > limit:
+        logger.warning(
+            "Places stage: capping %d results to max_places_per_run=%d",
+            len(places), limit,
+        )
+        places = places[:limit]
 
     results_count = len(places)
     new_count = 0

@@ -83,7 +83,11 @@ async def run_status_page(
     campaign = await campaign_service.get_campaign_or_404(session, campaign_id)
     run = await campaign_service.get_search_run_or_404(session, run_id)
     return templates.TemplateResponse(
-        request, "campaigns/run_status.html", {"campaign": campaign, "run": run}
+        request, "campaigns/run_status.html", {
+            "campaign": campaign,
+            "run": run,
+            "campaign_id": campaign_id,
+        }
     )
 
 

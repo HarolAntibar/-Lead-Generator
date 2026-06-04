@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
 
+    # Pipeline safety limits (Phase 2)
+    # Hard ceiling on businesses processed per run — prevents runaway Google API spend.
+    max_places_per_run: int = 60
+    # Seconds before the whole pipeline background task is cancelled and marked error.
+    # Protects against runs stuck in "running" forever due to unexpected crashes.
+    pipeline_run_timeout_seconds: int = 300
+
     # Lead scoring weights (Phase 2)
     # Each weight is the maximum points that signal can contribute to the 0-100 score.
     score_weight_no_website: int = 35
