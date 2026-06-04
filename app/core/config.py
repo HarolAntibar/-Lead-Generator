@@ -30,15 +30,29 @@ class Settings(BaseSettings):
     # Protects against runs stuck in "running" forever due to unexpected crashes.
     pipeline_run_timeout_seconds: int = 300
 
-    # Lead scoring weights (Phase 2)
+    # Scraping (Phase 3)
+    # httpx-based scraper — no JS execution needed; HTML shell is enough to classify tech.
+    scraper_timeout_seconds: int = 10
+    # Hard cap on downloaded HTML to avoid pulling in huge files or PDFs.
+    scraper_max_content_bytes: int = 512_000
+    # Max redirects to follow (HTTP → HTTPS is standard for business sites).
+    scraper_max_redirects: int = 5
+    # Polite User-Agent so we're not mistaken for a bad actor.
+    scraper_user_agent: str = (
+        "Mozilla/5.0 (compatible; LeadBot/1.0; +https://example.com/bot)"
+    )
+    # Max parallel scrape tasks per pipeline run — keeps VPS load manageable.
+    scraper_max_concurrency: int = 5
+
+    # Lead scoring weights (Phase 2 — active; Phase 3 weights now also active)
     # Each weight is the maximum points that signal can contribute to the 0-100 score.
     score_weight_no_website: int = 35
     score_weight_rating: int = 25
-    score_weight_no_automation: int = 15   # reserved for Phase 3 (scraping)
-    score_weight_outdated_site: int = 25   # reserved for Phase 3 (scraping)
+    score_weight_no_automation: int = 15
+    score_weight_outdated_site: int = 25
 
     # Thresholds for the rating signal
-    score_rating_min_reviews: int = 20     # ignore rating if fewer reviews than this
+    score_rating_min_reviews: int = 20
     score_rating_good_threshold: float = 4.0
 
     @property
