@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     score_rating_min_reviews: int = 20
     score_rating_good_threshold: float = 4.0
 
+    # Threshold for the outdated-site signal (Phase 3).
+    # quality_score is 0-100 from signals.py. Sites below this value are considered
+    # poor/outdated and earn the full score_weight_outdated_site points.
+    score_outdated_site_quality_threshold: int = 40
+
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"

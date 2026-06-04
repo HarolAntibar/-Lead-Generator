@@ -1,22 +1,28 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.features.businesses.models import Business
+from app.features.businesses.models import Business, WebsiteAnalysis
 from app.features.leads import repository as leads_repo
 from app.features.leads.models import LeadScore, LeadStatus, LeadStatusChoice
 from app.features.leads.schemas import LeadOut, LeadStatusUpdate
 from app.pipeline.scoring import compute_score
 
 
-async def score_and_save(session: AsyncSession, business: Business) -> LeadScore:
+async def score_and_save(
+    session: AsyncSession,
+    business: Business,
+    analysis: WebsiteAnalysis | None = None,
+) -> LeadScore:
     """Compute the viability score for *business* and persist it.
 
-    Called by the pipeline orchestrator after a business is inserted/confirmed.
+    Called by the pipeline orchestrator after scraping is complete.
+    *analysis* is None for businesses without a website; scoring.py handles
+    that case by skipping signals 3 and 4.
     Also creates a 'new' CRM status if one doesn't exist yet (DO NOTHING if the
     salesperson has already moved it to another state).
     """
     settings = get_settings()
-    result = compute_score(business, settings)
+    result = compute_score(business, settings, analysis)
 
     lead_score = await leads_repo.upsert_lead_score(
         session,

@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.businesses.constants import BusinessSortBy
-from app.features.businesses.models import Business
+from app.features.businesses.models import Business, Contact, WebsiteAnalysis
 from app.integrations.google.client import PlaceResult
 
 
@@ -84,3 +84,95 @@ async def list_businesses(
 
     result = await session.execute(stmt.offset(offset).limit(limit))
     return list(result.scalars().all())
+
+
+async def save_website_analysis(
+    session: AsyncSession,
+    *,
+    business_id: int,
+    reachable: bool,
+    cms_detected: str | None,
+    tech_stack: dict | None,
+    has_chat: bool,
+    has_booking: bool,
+    freshness_signal: str | None,
+    quality_score: int | None,
+    raw_signals: dict | None,
+    analyzed_at: str,
+) -> WebsiteAnalysis:
+    """Upsert a WebsiteAnalysis row (one per business, UNIQUE on business_id).
+
+    ON CONFLICT DO UPDATE so re-running a campaign refreshes the analysis instead
+    of leaving stale data or raising a duplicate-key error.
+    """
+    stmt = (
+        insert(WebsiteAnalysis)
+        .values(
+            business_id=business_id,
+            reachable=reachable,
+            cms_detected=cms_detected,
+            tech_stack=tech_stack,
+            has_chat=has_chat,
+            has_booking=has_booking,
+            freshness_signal=freshness_signal,
+            quality_score=quality_score,
+            raw_signals=raw_signals,
+            analyzed_at=analyzed_at,
+        )
+        .on_conflict_do_update(
+            index_elements=["business_id"],
+            set_={
+                "reachable": reachable,
+                "cms_detected": cms_detected,
+                "tech_stack": tech_stack,
+                "has_chat": has_chat,
+                "has_booking": has_booking,
+                "freshness_signal": freshness_signal,
+                "quality_score": quality_score,
+                "raw_signals": raw_signals,
+                "analyzed_at": analyzed_at,
+            },
+        )
+    )
+    await session.execute(stmt)
+    await session.commit()
+
+    row = await session.execute(
+        select(WebsiteAnalysis).where(WebsiteAnalysis.business_id == business_id)
+    )
+    return row.scalar_one()
+
+
+async def get_website_analysis(
+    session: AsyncSession,
+    business_id: int,
+) -> WebsiteAnalysis | None:
+    result = await session.execute(
+        select(WebsiteAnalysis).where(WebsiteAnalysis.business_id == business_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def save_contacts(
+    session: AsyncSession,
+    business_id: int,
+    contacts: list[dict],
+) -> None:
+    """Insert extracted contacts for a business.
+
+    Every contact is stored with is_personal_data=True (GDPR compliance — the source
+    field records where the data was found so it can be audited or deleted on request).
+    Contacts are always re-inserted fresh; dedup within a run is handled upstream by
+    the extract stage returning a deduplicated list.
+    """
+    for data in contacts:
+        session.add(Contact(
+            business_id=business_id,
+            email=data.get("email"),
+            name=data.get("name"),
+            role=data.get("role"),
+            source=data.get("source"),
+            confidence=data.get("confidence"),
+            is_personal_data=True,
+        ))
+    await session.commit()

@@ -109,8 +109,10 @@ def analyze(html: str) -> TechResult:
         cms_detected = None
         opportunity_type = "website"
 
-    # Outdated HTTPS is an extra signal that keeps opportunity_type as "website".
-    # Note: signals.py will later refine "website" → "both" if automation gaps exist.
+    # Store opportunity_type inside tech_stack so it is persisted in the JSONB column
+    # and readable by scoring.py without extra parameters.
+    # signals.py data will refine "website" → "both" in scoring.py if automation gaps exist.
+    tech_stack["opportunity_type"] = opportunity_type
 
     return TechResult(
         cms_detected=cms_detected,
