@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.dependencies import get_session
 from app.export.csv_exporter import leads_to_csv
 from app.export.excel_exporter import leads_to_excel
@@ -11,6 +12,8 @@ from app.features.leads.models import LeadStatusChoice
 from app.features.leads.schemas import LeadOut, LeadStatusOut, LeadStatusUpdate
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
+
+_settings = get_settings()
 
 
 @router.get("", response_model=list[LeadOut])
@@ -48,7 +51,7 @@ async def export_leads(
     leads = await leads_service.list_leads(
         session,
         page=1,
-        size=10_000,
+        size=_settings.export_max_rows,
         has_website=has_website,
         status=status,
         opportunity_type=opportunity_type,

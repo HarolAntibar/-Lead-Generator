@@ -66,6 +66,14 @@ class Settings(BaseSettings):
     # poor/outdated and earn the full score_weight_outdated_site points.
     score_outdated_site_quality_threshold: int = 40
 
+    # Rate limit for campaign run triggers — each run costs Google API credits, so
+    # accidental double-clicks or scripts cannot drain the quota.
+    campaign_run_rate_limit: str = "5/minute"
+
+    # Max rows the export endpoint will return. Acts as a memory/response-size safety
+    # cap; the underlying query is still filtered by the same params as the list view.
+    export_max_rows: int = 10_000
+
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"

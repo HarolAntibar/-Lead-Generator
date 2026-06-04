@@ -19,6 +19,7 @@ from dataclasses import dataclass
 
 from app.core.config import Settings
 from app.features.businesses.models import Business, WebsiteAnalysis
+from app.pipeline.constants import OpportunityType
 
 SCORING_MODEL_VERSION = "v2-scraping"
 
@@ -30,7 +31,9 @@ class ScoreResult:
     model_version: str
 
 
-def _compute_opportunity_type(business: Business, analysis: WebsiteAnalysis | None) -> str:
+def _compute_opportunity_type(
+    business: Business, analysis: WebsiteAnalysis | None
+) -> OpportunityType:
     """Derive the final opportunity type from tech detection + automation signals.
 
     tech_detect.py stores an initial opportunity_type ("website" or "automation")
@@ -38,21 +41,22 @@ def _compute_opportunity_type(business: Business, analysis: WebsiteAnalysis | No
     signals (has_chat, has_booking) that signals.py detected.
     """
     if not business.has_website or analysis is None:
-        return "website"
+        return OpportunityType.WEBSITE
 
-    tech_type = (analysis.tech_stack or {}).get("opportunity_type", "website")
+    raw = (analysis.tech_stack or {}).get("opportunity_type", OpportunityType.WEBSITE)
+    tech_type = OpportunityType(raw)
 
-    if tech_type == "automation":
+    if tech_type == OpportunityType.AUTOMATION:
         # Modern framework — already well-equipped if it has both chat AND booking.
         if analysis.has_chat and analysis.has_booking:
-            return "low"
-        return "automation"
+            return OpportunityType.LOW
+        return OpportunityType.AUTOMATION
 
     # Legacy CMS or unknown stack — check if automation features are missing.
     has_automation = analysis.has_chat or analysis.has_booking
     if not has_automation:
-        return "both"   # sell redesign + automation package
-    return "website"    # has some automation already, needs site improvement only
+        return OpportunityType.BOTH   # sell redesign + automation package
+    return OpportunityType.WEBSITE    # has some automation already, needs site improvement only
 
 
 def compute_score(
@@ -145,10 +149,10 @@ def _rating_points(business: Business, settings: Settings) -> tuple[int, str]:
 
 def _no_automation_points(
     analysis: WebsiteAnalysis | None,
-    opportunity_type: str,
+    opportunity_type: OpportunityType,
     settings: Settings,
 ) -> tuple[int, str]:
-    if opportunity_type not in ("automation", "both"):
+    if opportunity_type not in (OpportunityType.AUTOMATION, OpportunityType.BOTH):
         return 0, "not applicable for this opportunity type"
     if analysis is None:
         return 0, "not yet evaluated (requires scraping)"
@@ -167,10 +171,10 @@ def _no_automation_points(
 
 def _outdated_site_points(
     analysis: WebsiteAnalysis | None,
-    opportunity_type: str,
+    opportunity_type: OpportunityType,
     settings: Settings,
 ) -> tuple[int, str]:
-    if opportunity_type not in ("website", "both"):
+    if opportunity_type not in (OpportunityType.WEBSITE, OpportunityType.BOTH):
         return 0, "not applicable for this opportunity type"
     if analysis is None:
         return 0, "not yet evaluated (requires scraping)"

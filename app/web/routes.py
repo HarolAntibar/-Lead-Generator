@@ -4,10 +4,11 @@ from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.core.config import get_settings
 from app.core.dependencies import SessionDep
+from app.core.rate_limit import limiter
 from app.features.businesses import service as business_service
 from app.features.businesses.constants import BusinessSortBy
-from app.features.campaigns import repository as campaign_repo
 from app.features.campaigns import service as campaign_service
 from app.features.campaigns.schemas import CampaignCreate
 from app.features.drafts import service as drafts_service
@@ -15,31 +16,43 @@ from app.features.leads import service as leads_service
 from app.features.leads.models import LeadStatusChoice
 from app.features.leads.schemas import LeadStatusUpdate
 from app.pipeline import orchestrator
+from app.pipeline.constants import OpportunityType
+from app.web.constants import (
+    WEB_BUSINESSES_LIST_LIMIT,
+    WEB_CAMPAIGNS_LIST_LIMIT,
+    WEB_HOME_RECENT_RUNS,
+    WEB_HOME_TOP_LEADS,
+    WEB_LEADS_LIST_SIZE,
+)
 
 templates = Jinja2Templates(directory="app/web/templates")
 router = APIRouter(tags=["web"])
+
+_settings = get_settings()
 
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request, session: SessionDep) -> HTMLResponse:
     stats = await leads_service.get_dashboard_stats(session)
     top_leads = await leads_service.list_leads(
-        session, page=1, size=5, has_website=None,
+        session, page=1, size=WEB_HOME_TOP_LEADS, has_website=None,
     )
-    recent_runs = await campaign_repo.list_recent_runs(session, limit=5)
+    recent_runs = await campaign_service.list_recent_runs(session, limit=WEB_HOME_RECENT_RUNS)
     return templates.TemplateResponse(request, "home.html", {
         "stats": stats,
         "top_leads": top_leads,
         "recent_runs": recent_runs,
         "today": date.today().strftime("%A, %d %b %Y"),
         "all_statuses": [s.value for s in LeadStatusChoice],
-        "all_opp_types": ["website", "both", "automation", "low"],
+        "all_opp_types": list(OpportunityType),
     })
 
 
 @router.get("/campaigns", response_class=HTMLResponse)
 async def campaigns_page(request: Request, session: SessionDep) -> HTMLResponse:
-    campaigns = await campaign_service.list_campaigns(session, offset=0, limit=50)
+    campaigns = await campaign_service.list_campaigns(
+        session, offset=0, limit=WEB_CAMPAIGNS_LIST_LIMIT
+    )
     return templates.TemplateResponse(request, "campaigns/index.html", {"campaigns": campaigns})
 
 
@@ -81,13 +94,15 @@ async def campaign_detail(
 
 
 @router.post("/campaigns/{campaign_id}/runs", response_class=RedirectResponse)
+@limiter.limit(_settings.campaign_run_rate_limit)
 async def trigger_run_form(
+    request: Request,
     campaign_id: int,
     session: SessionDep,
     background_tasks: BackgroundTasks,
 ) -> RedirectResponse:
     campaign = await campaign_service.get_campaign_or_404(session, campaign_id)
-    run = await campaign_repo.create_search_run(session, campaign.id)
+    run = await campaign_service.create_search_run(session, campaign.id)
     background_tasks.add_task(orchestrator.run_search, run.id, campaign_id)
     return RedirectResponse(
         url=f"/campaigns/{campaign_id}/runs/{run.id}", status_code=303
@@ -128,7 +143,8 @@ async def businesses_page(
     ref_lng: float | None = None,
 ) -> HTMLResponse:
     businesses = await business_service.list_businesses(
-        session, offset=0, limit=100, sort_by=sort_by, ref_lat=ref_lat, ref_lng=ref_lng
+        session, offset=0, limit=WEB_BUSINESSES_LIST_LIMIT,
+        sort_by=sort_by, ref_lat=ref_lat, ref_lng=ref_lng,
     )
     return templates.TemplateResponse(
         request,
@@ -145,7 +161,7 @@ async def leads_page(
     opportunity_type: str | None = None,
 ) -> HTMLResponse:
     leads = await leads_service.list_leads(
-        session, page=1, size=100,
+        session, page=1, size=WEB_LEADS_LIST_SIZE,
         has_website=None, status=status, opportunity_type=opportunity_type,
     )
     return templates.TemplateResponse(
@@ -154,7 +170,7 @@ async def leads_page(
             "status_filter": status,
             "opportunity_type_filter": opportunity_type,
             "all_statuses": list(LeadStatusChoice),
-            "all_opportunity_types": ["website", "automation", "both", "low"],
+            "all_opportunity_types": list(OpportunityType),
         },
     )
 
@@ -167,7 +183,7 @@ async def leads_table(
     opportunity_type: str | None = None,
 ) -> HTMLResponse:
     leads = await leads_service.list_leads(
-        session, page=1, size=100,
+        session, page=1, size=WEB_LEADS_LIST_SIZE,
         has_website=None, status=status, opportunity_type=opportunity_type,
     )
     return templates.TemplateResponse(
@@ -254,7 +270,8 @@ async def businesses_table(
     ref_lng: float | None = None,
 ) -> HTMLResponse:
     businesses = await business_service.list_businesses(
-        session, offset=0, limit=100, sort_by=sort_by, ref_lat=ref_lat, ref_lng=ref_lng
+        session, offset=0, limit=WEB_BUSINESSES_LIST_LIMIT,
+        sort_by=sort_by, ref_lat=ref_lat, ref_lng=ref_lng,
     )
     return templates.TemplateResponse(
         request,

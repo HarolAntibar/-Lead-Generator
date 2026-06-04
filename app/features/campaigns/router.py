@@ -1,13 +1,16 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Request
 
+from app.core.config import get_settings
 from app.core.dependencies import PaginationDep, SessionDep
-from app.features.campaigns import repository as campaign_repo
+from app.core.rate_limit import limiter
 from app.features.campaigns import service
 from app.features.campaigns.dependencies import CampaignDep
 from app.features.campaigns.schemas import CampaignCreate, CampaignRead, SearchRunRead
 from app.pipeline import orchestrator
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
+
+_settings = get_settings()
 
 
 @router.post("", response_model=CampaignRead, status_code=201)
@@ -28,12 +31,14 @@ async def get_campaign(campaign: CampaignDep) -> CampaignRead:
 
 
 @router.post("/{campaign_id}/runs", response_model=SearchRunRead, status_code=202)
+@limiter.limit(_settings.campaign_run_rate_limit)
 async def trigger_search_run(
+    request: Request,
     campaign: CampaignDep,
     session: SessionDep,
     background_tasks: BackgroundTasks,
 ) -> SearchRunRead:
-    run = await campaign_repo.create_search_run(session, campaign.id)
+    run = await service.create_search_run(session, campaign.id)
     background_tasks.add_task(orchestrator.run_search, run.id, campaign.id)
     return SearchRunRead.model_validate(run)
 

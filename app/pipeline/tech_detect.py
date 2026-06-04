@@ -22,12 +22,14 @@ from dataclasses import dataclass, field
 
 from selectolax.parser import HTMLParser
 
+from app.pipeline.constants import OpportunityType
+
 
 @dataclass
 class TechResult:
     cms_detected: str | None
     tech_stack: dict
-    opportunity_type: str  # "website" | "automation" | "both" | "low"
+    opportunity_type: OpportunityType
 
 
 # ---------------------------------------------------------------------------
@@ -101,13 +103,13 @@ def analyze(html: str) -> TechResult:
     # Primary CMS label: prefer modern framework name, then legacy CMS name.
     if modern:
         cms_detected = modern[0]
-        opportunity_type = "automation"
+        opportunity_type = OpportunityType.AUTOMATION
     elif legacy:
         cms_detected = legacy[0]
-        opportunity_type = "website"
+        opportunity_type = OpportunityType.WEBSITE
     else:
         cms_detected = None
-        opportunity_type = "website"
+        opportunity_type = OpportunityType.WEBSITE
 
     # Store opportunity_type inside tech_stack so it is persisted in the JSONB column
     # and readable by scoring.py without extra parameters.

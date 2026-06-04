@@ -6,6 +6,7 @@ from app.features.campaigns.models import Campaign, SearchRun
 from app.features.campaigns.schemas import CampaignCreate
 
 
+
 async def create_campaign(
     session: AsyncSession,
     data: CampaignCreate,
@@ -51,5 +52,13 @@ async def get_search_run_or_404(session: AsyncSession, run_id: int) -> SearchRun
     return run
 
 
+async def create_search_run(session: AsyncSession, campaign_id: int) -> SearchRun:
+    return await repository.create_search_run(session, campaign_id)
+
+
 async def list_search_runs(session: AsyncSession, campaign_id: int) -> list[SearchRun]:
     return await repository.list_search_runs_by_campaign(session, campaign_id)
+
+
+async def list_recent_runs(session: AsyncSession, limit: int) -> list[dict]:
+    return await repository.list_recent_runs(session, limit)
