@@ -3,6 +3,18 @@
 
 {% block extra_style %}
 <style>
+  /* ── Entrance ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.4s ease-out both; }
+  .fade-up-1 { animation-delay: 0s; }
+  .fade-up-2 { animation-delay: 0.08s; }
+  .fade-up-3 { animation-delay: 0.16s; }
+  .fade-up-4 { animation-delay: 0.24s; }
+
+  /* ── Typography ── */
   .brief-date {
     font-size: 0.75rem;
     letter-spacing: 0.06em;
@@ -32,26 +44,36 @@
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--pico-table-border-color);
   }
+
+  /* ── Rows ── */
   .brief-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.45rem 0;
+    padding: 0.45rem 0.4rem;
     border-bottom: 1px solid var(--pico-table-border-color);
     font-size: 0.9rem;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: background 0.15s ease;
   }
   .brief-row:last-child { border-bottom: none; }
+  .brief-row:hover { background: rgba(128, 128, 128, 0.06); }
+
   .brief-num {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     min-width: 2.2rem;
     text-align: right;
+    position: relative; /* stay above bar */
   }
   .brief-rank {
     font-size: 0.75rem;
     color: var(--pico-color-grey-400);
     min-width: 1.2rem;
     font-variant-numeric: tabular-nums;
+    position: relative;
   }
   .brief-lead-name {
     flex: 1;
@@ -60,28 +82,83 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 180px;
+    position: relative;
   }
+
+  /* ── Proportion bar (Pipeline + Opportunity) ── */
+  @keyframes barFill {
+    from { width: 0; }
+    to   { width: var(--bar-w, 0%); }
+  }
+  .brief-row-bar::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: currentColor;
+    opacity: 0.07;
+    border-radius: 4px;
+    pointer-events: none;
+    width: var(--bar-w, 0%);
+    animation: barFill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--bar-delay, 0.35s);
+  }
+
+  /* ── Recent runs ── */
   .brief-run-row {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    padding: 0.6rem 0;
+    padding: 0.6rem 0.4rem;
     border-bottom: 1px solid var(--pico-table-border-color);
     font-size: 0.88rem;
+    border-radius: 4px;
+    transition: background 0.15s ease;
   }
   .brief-run-row:last-child { border-bottom: none; }
+  .brief-run-row:hover { background: rgba(128, 128, 128, 0.06); }
   .brief-run-name { flex: 1; font-weight: 500; }
   .brief-run-meta { color: var(--pico-color-grey-500); font-size: 0.8rem; }
+
+  /* ── Status dot ── */
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+  .status-dot-running {
+    background: var(--pico-color-blue-500);
+    animation: pulseDot 1.5s ease-out infinite;
+  }
+  @keyframes pulseDot {
+    0%   { box-shadow: 0 0 0 0 rgba(99, 170, 255, 0.55); }
+    65%  { box-shadow: 0 0 0 6px rgba(99, 170, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(99, 170, 255, 0); }
+  }
+  .status-dot-done    { background: var(--pico-color-green-500); }
+  .status-dot-error   { background: var(--pico-color-red-500); }
+  .status-dot-pending { background: var(--pico-color-grey-400); }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up               { animation: none; opacity: 1; transform: none; }
+    .brief-row-bar::before { animation: none; }
+    .status-dot-running    { animation: none; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 
 {# ── Top bar: hero number left, date + CTA right ── #}
-<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem;">
+<div class="fade-up fade-up-1" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem;">
   <div>
     <p class="brief-date">{{ today }}</p>
-    <p class="brief-hero-number">{{ stats.total }}</p>
+    <p class="brief-hero-number" id="hero-counter" data-target="{{ stats.total }}">{{ stats.total }}</p>
     <p class="brief-hero-label">leads in pipeline</p>
   </div>
   <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem; padding-top:0.25rem;">
@@ -91,17 +168,16 @@
 </div>
 
 {# ── Main grid: pipeline status + top opportunities ── #}
-<div class="grid" style="margin-bottom:1.5rem;">
+<div class="grid fade-up fade-up-2" style="margin-bottom:1.5rem;">
 
   <article style="margin:0;">
     <p class="brief-section-label">Pipeline</p>
     {% for s in all_statuses %}
     {% set count = stats.by_status.get(s, 0) %}
-    <div class="brief-row">
+    {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
+    <div class="brief-row brief-row-bar" style="--bar-w:{{ pct }}%;">
       <span class="lead-{{ s }}">{{ s | capitalize }}</span>
-      <span class="brief-num {% if count == 0 %}style="color:var(--pico-color-grey-400)"{% endif %}">
-        {{ count }}
-      </span>
+      <span class="brief-num">{{ count }}</span>
     </div>
     {% endfor %}
     <div class="brief-row" style="margin-top:0.5rem; border-top:1px solid var(--pico-table-border-color);">
@@ -131,12 +207,13 @@
 
 </div>
 
-{# ── Opportunity breakdown (narrow, left-aligned) ── #}
-<article style="margin:0 0 1.5rem 0; max-width:340px;">
+{# ── Opportunity breakdown ── #}
+<article class="fade-up fade-up-3" style="margin:0 0 1.5rem 0; max-width:340px;">
   <p class="brief-section-label">By opportunity type</p>
   {% for ot in all_opp_types %}
   {% set count = stats.by_opp_type.get(ot, 0) %}
-  <div class="brief-row">
+  {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
+  <div class="brief-row brief-row-bar" style="--bar-w:{{ pct }}%;">
     <span class="opp-{{ ot }}">{{ ot | capitalize }}</span>
     <span class="brief-num">{{ count }}</span>
   </div>
@@ -144,13 +221,15 @@
 </article>
 
 {# ── Recent runs ── #}
-<article style="margin:0;">
+<article class="fade-up fade-up-4" style="margin:0;">
   <p class="brief-section-label">Recent runs</p>
   {% if recent_runs %}
     {% for run in recent_runs %}
     <div class="brief-run-row">
       <span class="brief-run-name">{{ run.campaign_name }}</span>
-      <span class="brief-run-meta status-{{ run.status.value }}">{{ run.status.value }}</span>
+      <span class="brief-run-meta status-{{ run.status.value }}">
+        <span class="status-dot status-dot-{{ run.status.value }}"></span>{{ run.status.value }}
+      </span>
       <span class="brief-run-meta">{{ run.results_count }} results · {{ run.new_count }} new</span>
       <a href="/campaigns/{{ run.campaign_id }}/runs/{{ run.run_id }}" style="font-size:0.8rem;">View →</a>
     </div>
@@ -159,5 +238,24 @@
     <p style="color:var(--pico-color-grey-400); font-size:0.88rem;">No runs yet. Start your first campaign.</p>
   {% endif %}
 </article>
+
+<script>
+(function () {
+  const el = document.getElementById('hero-counter');
+  const target = parseInt(el.dataset.target, 10);
+  if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  el.textContent = '0';
+  const dur = Math.min(900, 250 + target * 10);
+  const start = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  function tick(now) {
+    const p = Math.min((now - start) / dur, 1);
+    el.textContent = Math.round(easeOut(p) * target);
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}());
+</script>
 
 {% endblock %}

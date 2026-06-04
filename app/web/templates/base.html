@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,33 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
     <style>
+        /* ── Dark theme overrides ──────────────────────────────────────────── */
+        :root {
+          --pico-background-color:                  #0d1117;
+          --pico-card-background-color:             #131720;
+          --pico-card-sectioning-background-color:  #131720;
+          --pico-card-border-color:                 rgba(255, 255, 255, 0.07);
+          --pico-table-border-color:                rgba(255, 255, 255, 0.06);
+          --pico-muted-border-color:                rgba(255, 255, 255, 0.06);
+        }
+
+        body {
+          background: radial-gradient(ellipse 80% 50% at 50% -10%, #1a2235 0%, #0d1117 55%);
+          min-height: 100vh;
+        }
+
+        /* ── Sticky nav with glass blur ────────────────────────────────────── */
+        header {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: rgba(13, 17, 23, 0.82);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ── Utilities ─────────────────────────────────────────────────────── */
         .spinner {
             display: inline-block;
             width: 1rem;
@@ -18,29 +45,30 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
         .status-pending  { color: var(--pico-color-grey-500); }
-        .status-running  { color: var(--pico-color-blue-500); }
-        .status-done     { color: var(--pico-color-green-500); }
-        .status-error    { color: var(--pico-color-red-500); }
+        .status-running  { color: var(--pico-color-blue-400); }
+        .status-done     { color: var(--pico-color-green-400); }
+        .status-error    { color: var(--pico-color-red-400); }
         .sort-active     { font-weight: bold; text-decoration: underline; }
 
-        /* Lead status badges */
-        .lead-new        { color: var(--pico-color-grey-500); }
-        .lead-contacted  { color: var(--pico-color-blue-500); }
-        .lead-interested { color: var(--pico-color-green-500); }
+        /* Lead status badges — brighter tones for dark bg */
+        .lead-new        { color: var(--pico-color-grey-400); }
+        .lead-contacted  { color: var(--pico-color-blue-400); }
+        .lead-interested { color: var(--pico-color-green-400); }
         .lead-discarded  { color: var(--pico-color-red-400); }
-        .lead-client     { color: var(--pico-color-green-700); font-weight: bold; }
+        .lead-client     { color: var(--pico-color-green-300); font-weight: bold; }
 
         /* Score badges */
-        .score-high   { color: var(--pico-color-green-600); font-weight: bold; }
-        .score-medium { color: var(--pico-color-orange-500); font-weight: bold; }
+        .score-high   { color: var(--pico-color-green-400); font-weight: bold; }
+        .score-medium { color: var(--pico-color-orange-400); font-weight: bold; }
         .score-low    { color: var(--pico-color-grey-500); }
 
         /* Opportunity type badges */
-        .opp-website    { color: var(--pico-color-blue-600); }
-        .opp-automation { color: var(--pico-color-purple-600); }
-        .opp-both       { color: var(--pico-color-orange-600); }
-        .opp-low        { color: var(--pico-color-grey-400); }
+        .opp-website    { color: var(--pico-color-blue-400); }
+        .opp-automation { color: var(--pico-color-purple-400); }
+        .opp-both       { color: var(--pico-color-orange-400); }
+        .opp-low        { color: var(--pico-color-grey-500); }
 
         /* Score breakdown collapsible */
         details.score-breakdown summary { cursor: pointer; list-style: none; }
@@ -52,8 +80,8 @@
     {% block extra_style %}{% endblock %}
 </head>
 <body>
-    <header class="container">
-        <nav>
+    <header>
+        <nav class="container">
             <ul><li><strong>Lead Generator</strong></li></ul>
             <ul>
                 <li><a href="/campaigns">Campaigns</a></li>
