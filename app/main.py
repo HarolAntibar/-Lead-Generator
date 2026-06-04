@@ -2,14 +2,19 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import get_settings
 from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
+from app.core.rate_limit import limiter
 from app.features.auth import models as _auth_models  # noqa: F401 — registers User in SQLAlchemy metadata
 from app.features.businesses.router import router as businesses_router
 from app.features.campaigns.router import router as campaigns_router
+from app.features.drafts.router import router as drafts_router
 from app.features.leads.router import router as leads_router
 from app.web.routes import router as web_router
 
@@ -35,6 +40,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.secret_key,
@@ -47,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(campaigns_router)
     app.include_router(businesses_router)
     app.include_router(leads_router)
+    app.include_router(drafts_router)
 
     register_exception_handlers(app)
 

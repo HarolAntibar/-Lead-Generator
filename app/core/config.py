@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     # Gemini API (Phase 4)
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    # Hard timeout on LLM API calls — prevents hanging the request if the provider
+    # is slow or unresponsive. Frees the connection and returns an error to the user.
+    llm_timeout_seconds: int = 30
+    # Max draft requests per user per minute — protects against accidental loops
+    # or abuse that would burn API quota.
+    llm_rate_limit: str = "10/minute"
 
     # Pipeline safety limits (Phase 2)
     # Hard ceiling on businesses processed per run — prevents runaway Google API spend.
