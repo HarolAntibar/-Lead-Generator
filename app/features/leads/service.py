@@ -4,6 +4,7 @@ from app.core.config import get_settings
 from app.features.businesses.models import Business, WebsiteAnalysis
 from app.features.leads import repository as leads_repo
 from app.features.leads.models import LeadScore, LeadStatus, LeadStatusChoice
+from app.features.leads.schemas import LeadStatusUpdate
 from app.features.leads.schemas import LeadOut, LeadStatusUpdate
 from app.pipeline.scoring import compute_score
 
@@ -40,11 +41,17 @@ async def update_status(
     business_id: int,
     payload: LeadStatusUpdate,
 ) -> LeadStatus | None:
+    # Only touch assigned_to if the client explicitly sent it in the request body.
+    # model_fields_set contains the names of fields that were actually provided —
+    # if assigned_to is absent from the JSON, we leave the current assignment untouched.
+    update_assignment = "assigned_to" in payload.model_fields_set
     return await leads_repo.update_lead_status(
         session,
         business_id=business_id,
         status=payload.status,
         notes=payload.notes,
+        update_assignment=update_assignment,
+        assigned_to=payload.assigned_to if update_assignment else None,
     )
 
 
@@ -53,6 +60,15 @@ async def list_leads(
     page: int,
     size: int,
     has_website: bool | None,
+    status: LeadStatusChoice | None = None,
+    opportunity_type: str | None = None,
 ) -> list[LeadOut]:
-    rows = await leads_repo.list_leads(session, page=page, size=size, has_website=has_website)
+    rows = await leads_repo.list_leads(
+        session,
+        page=page,
+        size=size,
+        has_website=has_website,
+        status=status,
+        opportunity_type=opportunity_type,
+    )
     return [LeadOut(**row) for row in rows]

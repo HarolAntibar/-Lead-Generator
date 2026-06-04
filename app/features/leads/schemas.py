@@ -27,6 +27,7 @@ class LeadStatusOut(BaseModel):
 class LeadStatusUpdate(BaseModel):
     status: LeadStatusChoice
     notes: str | None = None
+    assigned_to: int | None = None  # only applied if explicitly included in the request
 
 
 class LeadOut(BaseModel):
@@ -40,5 +41,6 @@ class LeadOut(BaseModel):
     reviews_count: int | None
     score: int
     breakdown: dict | None
+    opportunity_type: str | None
     status: LeadStatusChoice
     computed_at: datetime | None

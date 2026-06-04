@@ -78,6 +78,8 @@ async def update_lead_status(
     business_id: int,
     status: LeadStatusChoice,
     notes: str | None,
+    update_assignment: bool = False,
+    assigned_to: int | None = None,
 ) -> LeadStatus | None:
     row = await session.execute(
         select(LeadStatus).where(LeadStatus.business_id == business_id)
@@ -87,6 +89,8 @@ async def update_lead_status(
         return None
     lead_status.status = status
     lead_status.notes = notes
+    if update_assignment:
+        lead_status.assigned_to = assigned_to
     await session.commit()
     await session.refresh(lead_status)
     return lead_status
@@ -104,13 +108,16 @@ async def list_leads(
     page: int = 1,
     size: int = 20,
     has_website: bool | None = None,
+    status: LeadStatusChoice | None = None,
+    opportunity_type: str | None = None,
 ) -> list[dict]:
     """Return a flat list of dicts combining businesses + scores + statuses.
 
     Uses a raw join so we return everything in one query without loading three
-    separate ORM trees per lead.
+    separate ORM trees per lead. opportunity_type is extracted from the
+    breakdown JSONB column using PostgreSQL's -> operator.
     """
-    from sqlalchemy import Float, and_, cast, func, text
+    from sqlalchemy import Float, cast
     from app.features.businesses.models import Business
 
     query = (
@@ -124,6 +131,7 @@ async def list_leads(
             Business.reviews_count,
             LeadScore.score,
             LeadScore.breakdown,
+            LeadScore.breakdown["opportunity_type"].as_string().label("opportunity_type"),
             LeadScore.computed_at,
             LeadStatus.status,
         )
@@ -134,6 +142,12 @@ async def list_leads(
 
     if has_website is not None:
         query = query.where(Business.has_website == has_website)
+    if status is not None:
+        query = query.where(LeadStatus.status == status)
+    if opportunity_type is not None:
+        query = query.where(
+            LeadScore.breakdown["opportunity_type"].as_string() == opportunity_type
+        )
 
     offset = (page - 1) * size
     query = query.offset(offset).limit(size)
