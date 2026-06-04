@@ -41,6 +41,18 @@ async def upsert_business(
     return existing.scalar_one(), is_new
 
 
+async def get_businesses_for_run(session: AsyncSession, run_id: int) -> list[Business]:
+    """Return all businesses that were first seen in *run_id*.
+
+    Used by the pipeline orchestrator to score only the businesses discovered
+    in the current run — avoids re-scoring everything on every run.
+    """
+    result = await session.execute(
+        select(Business).where(Business.first_seen_run_id == run_id)
+    )
+    return list(result.scalars().all())
+
+
 async def get_business_by_id(session: AsyncSession, business_id: int) -> Business | None:
     result = await session.execute(
         select(Business).where(Business.id == business_id)

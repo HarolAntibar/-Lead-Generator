@@ -23,6 +23,8 @@ async def clean_tables(db_session: AsyncSession) -> None:
     # search_runs.campaign_id -> campaigns (CASCADE) — runs before campaigns.
     await db_session.execute(text("DELETE FROM website_analyses"))
     await db_session.execute(text("DELETE FROM contacts"))
+    await db_session.execute(text("DELETE FROM lead_scores"))
+    await db_session.execute(text("DELETE FROM lead_status"))
     await db_session.execute(text("DELETE FROM businesses"))
     await db_session.execute(text("DELETE FROM search_runs"))
     await db_session.execute(text("DELETE FROM campaigns"))

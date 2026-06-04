@@ -72,7 +72,7 @@ app/
   features/          — user-facing DOMAINS; each one uses the SAME 8-file mold:
     │                  router · schemas · service · repository · models
     │                  dependencies · constants · exceptions
-    auth/            — users, login, RBAC (admin/vendedor)
+    auth/            — users, login, RBAC (admin/seller)
     campaigns/       — campaigns + search_runs
     businesses/      — business entity + dedup by google_place_id
     leads/           — scoring + mini-CRM status
@@ -90,7 +90,7 @@ app/
     llm/             — provider-agnostic: base.py (interface) · client.py (factory) · prompts.py
     sheets/          — Google Sheets export
   export/            — CSV/Excel exporters (non-external)
-  jobs/              — (reserved) scheduled tasks — Fase 6
+  jobs/              — (reserved) scheduled tasks — Phase 6
   web/               — presentation: HTMX route handlers + templates/ (per feature) + static/
   shared/            — tiny cross-domain helpers (phones, text)
 alembic/             — migrations
@@ -125,7 +125,7 @@ scripts/             — one-off scripts (create admin, seeds)
 
 - **Type hints everywhere** — function signatures, model fields, service returns.
 - **Async-first**: routes, DB calls, and `httpx` calls are `async`. Don't block the event loop.
-- Follow **PEP 8**; format with the project formatter (Ruff/Black — finalized in Fase 0).
+- Follow **PEP 8**; format with the project formatter (Ruff/Black — finalized in Phase 0).
 - **No emojis** in code, logs, or UI.
 - Functions do **one thing**; keep them short and named for what they do.
 - Snake_case for functions/variables, PascalCase for classes, UPPER_SNAKE for constants.
@@ -199,7 +199,7 @@ async def fetch_site(url: str) -> str | None:
 - Never let LLM output drive shell commands, SQL, file writes, or outbound requests directly.
 
 ### Auth & Access
-- Passwords hashed with **bcrypt** (`passlib`). **RBAC**: roles `admin` and `vendedor`.
+- Passwords hashed with **bcrypt** (`passlib`). **RBAC**: roles `admin` and `seller`.
 - Enforce role checks with FastAPI dependencies, not ad-hoc `if` in handlers.
 - HTTPS only in prod; cookies `Secure` + `HttpOnly` + `SameSite`. Optional IP/VPN restriction.
 
@@ -231,7 +231,7 @@ async def fetch_site(url: str) -> str | None:
 
 ## Roadmap discipline
 
-Build in the phases defined in `PLAN.md` (Fase 0 → 6). Don't pull future-phase complexity
+Build in the phases defined in `PLAN.md` (Phase 0 → 6). Don't pull future-phase complexity
 forward (e.g. no Celery, no Playwright, no scheduled campaigns) until its phase — **ship the
 minimum needed** for the current phase, then iterate.
 
@@ -239,7 +239,7 @@ minimum needed** for the current phase, then iterate.
 
 ## Commands
 
-> Finalized in Fase 0; keep this section updated as the project grows.
+> Finalized in Phase 0; keep this section updated as the project grows.
 
 ```powershell
 # Run the dev server (to be confirmed)

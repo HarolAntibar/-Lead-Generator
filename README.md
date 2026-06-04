@@ -17,7 +17,7 @@ Private lead generation and management platform for digital services sales. Disc
 - AI-generated message drafts (email / WhatsApp) — never auto-sends
 - Mini-CRM with lead status tracking and assignment
 - Export to CSV / Excel / Google Sheets
-- Multi-user with role-based access (admin / vendedor)
+- Multi-user with role-based access (admin / seller)
 
 ## Project Structure
 
@@ -73,8 +73,8 @@ uv run alembic upgrade head
 | Phase | Description | Status |
 |-------|-------------|--------|
 | 0 | Foundation — FastAPI, PostgreSQL, auth skeleton | Done |
-| 1 | Google Places integration + business storage | Next |
-| 2 | Website split + rule-based scoring | Pending |
+| 1 | Google Places integration + business storage | Done |
+| 2 | Website split + rule-based scoring | Done |
 | 3 | Scraping + tech detection + data extraction | Pending |
 | 4 | LLM hybrid layer + AI draft generation | Pending |
 | 5 | Mini-CRM + CSV / Sheets export | Pending |

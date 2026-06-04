@@ -10,6 +10,7 @@ from app.core.exceptions import register_exception_handlers
 from app.features.auth import models as _auth_models  # noqa: F401 — registers User in SQLAlchemy metadata
 from app.features.businesses.router import router as businesses_router
 from app.features.campaigns.router import router as campaigns_router
+from app.features.leads.router import router as leads_router
 from app.web.routes import router as web_router
 
 
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(web_router)
     app.include_router(campaigns_router)
     app.include_router(businesses_router)
+    app.include_router(leads_router)
 
     register_exception_handlers(app)
 
