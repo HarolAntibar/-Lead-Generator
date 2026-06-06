@@ -1,7 +1,7 @@
-<table id="businesses-table">
+<table id="businesses-table" class="data-table">
     <thead>
         <tr>
-            <th>Name</th>
+            <th>Business</th>
             <th>Category</th>
             <th>Rating</th>
             <th>Reviews</th>
@@ -13,23 +13,37 @@
     <tbody>
         {% for b in businesses %}
         <tr>
-            <td>{{ b.name }}</td>
-            <td>{{ b.category or "—" }}</td>
-            <td>{{ b.rating or "—" }}</td>
-            <td>{{ b.reviews_count or "—" }}</td>
+            <td><strong>{{ b.name }}</strong></td>
+            <td style="color:var(--nv-text-muted); font-size:0.82rem;">{{ b.category or "—" }}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">{{ b.rating or "—" }}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--nv-text-muted);">{{ b.reviews_count or "—" }}</td>
             <td>
                 {% if b.has_website %}
-                <a href="{{ b.website_url }}" target="_blank" rel="noopener">Link</a>
+                <a href="{{ b.website_url }}" target="_blank" rel="noopener" style="font-size:0.82rem; color:var(--nv-secondary);">Link</a>
                 {% else %}
-                <span style="color: var(--pico-color-orange-500)">No website</span>
+                <span style="font-size:0.8rem; color:var(--nv-warning);">No website</span>
                 {% endif %}
             </td>
-            <td>{{ b.phone_raw or "—" }}</td>
-            <td>{{ b.address or "—" }}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--nv-text-muted);">{{ b.phone_raw or "—" }}</td>
+            <td style="font-size:0.8rem; color:var(--nv-text-muted);">{{ b.address or "—" }}</td>
         </tr>
         {% endfor %}
         {% if not businesses %}
-        <tr><td colspan="7">No businesses found. Run a search first.</td></tr>
+        <tr>
+            <td colspan="7">
+                <div class="empty-state" style="padding:3rem 2rem;">
+                    <div class="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+                            <path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/>
+                        </svg>
+                    </div>
+                    <h3>No businesses found</h3>
+                    <p>Run a campaign search to discover businesses in your target area.</p>
+                    <a href="/campaigns" class="btn btn-primary">Start Searching</a>
+                </div>
+            </td>
+        </tr>
         {% endif %}
     </tbody>
 </table>

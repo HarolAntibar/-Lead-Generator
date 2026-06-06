@@ -1,65 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Leads — Lead Generator{% endblock %}
+{% block title %}Leads — LeadNexus Pro{% endblock %}
 
 {% block content %}
-<h2>Leads</h2>
 
-<div style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:1rem;">
-  <label style="margin:0;">
-    Status
-    <select
-      id="filter-status"
-      hx-get="/leads/table"
-      hx-target="#leads-table"
-      hx-swap="outerHTML"
-      hx-include="#filter-status, #filter-opp-type"
-      name="status"
-    >
-      <option value="">All</option>
-      {% for s in all_statuses %}
-        <option value="{{ s.value }}" {% if s == status_filter %}selected{% endif %}>
-          {{ s.value | capitalize }}
-        </option>
-      {% endfor %}
-    </select>
-  </label>
-
-  <label style="margin:0;">
-    Opportunity
-    <select
-      id="filter-opp-type"
-      hx-get="/leads/table"
-      hx-target="#leads-table"
-      hx-swap="outerHTML"
-      hx-include="#filter-status, #filter-opp-type"
-      name="opportunity_type"
-    >
-      <option value="">All</option>
-      {% for ot in all_opportunity_types %}
-        <option value="{{ ot }}" {% if ot == opportunity_type_filter %}selected{% endif %}>
-          {{ ot | capitalize }}
-        </option>
-      {% endfor %}
-    </select>
-  </label>
-
-  <small style="color:var(--pico-color-grey-500);">{{ leads | length }} lead{{ 's' if leads | length != 1 else '' }}</small>
-
-  <div style="margin-left:auto; display:flex; gap:0.5rem;">
-    <a
-      href="/api/leads/export?format=csv{% if status_filter %}&status={{ status_filter.value }}{% endif %}{% if opportunity_type_filter %}&opportunity_type={{ opportunity_type_filter }}{% endif %}"
-      role="button"
-      class="outline"
-      style="padding:0.3rem 0.8rem; font-size:0.85rem;"
-    >CSV</a>
-    <a
-      href="/api/leads/export?format=xlsx{% if status_filter %}&status={{ status_filter.value }}{% endif %}{% if opportunity_type_filter %}&opportunity_type={{ opportunity_type_filter }}{% endif %}"
-      role="button"
-      class="outline"
-      style="padding:0.3rem 0.8rem; font-size:0.85rem;"
-    >Excel</a>
-  </div>
+{# ── Page header ── #}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Leads Management</h1>
+        <p class="page-subtitle">Review, filter, and export generated leads.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/api/leads/export?format=csv{% if status_filter %}&status={{ status_filter.value }}{% endif %}{% if opportunity_type_filter %}&opportunity_type={{ opportunity_type_filter }}{% endif %}"
+           class="btn btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            CSV
+        </a>
+        <a href="/api/leads/export?format=xlsx{% if status_filter %}&status={{ status_filter.value }}{% endif %}{% if opportunity_type_filter %}&opportunity_type={{ opportunity_type_filter }}{% endif %}"
+           class="btn btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            Excel
+        </a>
+        <a href="/campaigns" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Create Campaign
+        </a>
+    </div>
 </div>
 
-{% include "leads/_table.html" %}
+{# ── Filter panel ── #}
+<div class="card" style="margin-bottom:1.25rem; padding:1.25rem;">
+    <div class="leads-filter-panel">
+
+        {# Search — non-functional UI (backend search not yet implemented) #}
+        <div class="filter-field filter-field-search">
+            <label class="filter-label">Search</label>
+            <div class="search-input-wrap" style="max-width:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="Search by name, email, or company..." disabled style="opacity:0.5; cursor:not-allowed;">
+            </div>
+        </div>
+
+        {# Status filter #}
+        <div class="filter-field">
+            <label class="filter-label" for="filter-status">Status</label>
+            <select
+                id="filter-status"
+                hx-get="/leads/table"
+                hx-target="#leads-table"
+                hx-swap="outerHTML"
+                hx-include="#filter-status, #filter-opp-type"
+                name="status"
+            >
+                <option value="">All Statuses</option>
+                {% for s in all_statuses %}
+                    <option value="{{ s.value }}" {% if s == status_filter %}selected{% endif %}>
+                        {{ s.value | capitalize }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Opportunity type filter #}
+        <div class="filter-field">
+            <label class="filter-label" for="filter-opp-type">Opportunity</label>
+            <select
+                id="filter-opp-type"
+                hx-get="/leads/table"
+                hx-target="#leads-table"
+                hx-swap="outerHTML"
+                hx-include="#filter-status, #filter-opp-type"
+                name="opportunity_type"
+            >
+                <option value="">All Types</option>
+                {% for ot in all_opportunity_types %}
+                    <option value="{{ ot }}" {% if ot == opportunity_type_filter %}selected{% endif %}>
+                        {{ ot | capitalize }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+    </div>
+</div>
+
+{# ── Table ── #}
+<div class="card" style="padding:0; overflow:hidden;">
+    {% include "leads/_table.html" %}
+</div>
+
 {% endblock %}

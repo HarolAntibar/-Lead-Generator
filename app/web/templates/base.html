@@ -4,94 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Lead Generator{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/css/nexus.css">
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
-    <style>
-        /* ── Dark theme overrides ──────────────────────────────────────────── */
-        :root {
-          --pico-background-color:                  #0d1117;
-          --pico-card-background-color:             #131720;
-          --pico-card-sectioning-background-color:  #131720;
-          --pico-card-border-color:                 rgba(255, 255, 255, 0.07);
-          --pico-table-border-color:                rgba(255, 255, 255, 0.06);
-          --pico-muted-border-color:                rgba(255, 255, 255, 0.06);
-        }
-
-        body {
-          background: radial-gradient(ellipse 80% 50% at 50% -10%, #1a2235 0%, #0d1117 55%);
-          min-height: 100vh;
-        }
-
-        /* ── Sticky nav with glass blur ────────────────────────────────────── */
-        header {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          background: rgba(13, 17, 23, 0.82);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        /* ── Utilities ─────────────────────────────────────────────────────── */
-        .spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .status-pending  { color: var(--pico-color-grey-500); }
-        .status-running  { color: var(--pico-color-blue-400); }
-        .status-done     { color: var(--pico-color-green-400); }
-        .status-error    { color: var(--pico-color-red-400); }
-        .sort-active     { font-weight: bold; text-decoration: underline; }
-
-        /* Lead status badges — brighter tones for dark bg */
-        .lead-new        { color: var(--pico-color-grey-400); }
-        .lead-contacted  { color: var(--pico-color-blue-400); }
-        .lead-interested { color: var(--pico-color-green-400); }
-        .lead-discarded  { color: var(--pico-color-red-400); }
-        .lead-client     { color: var(--pico-color-green-300); font-weight: bold; }
-
-        /* Score badges */
-        .score-high   { color: var(--pico-color-green-400); font-weight: bold; }
-        .score-medium { color: var(--pico-color-orange-400); font-weight: bold; }
-        .score-low    { color: var(--pico-color-grey-500); }
-
-        /* Opportunity type badges */
-        .opp-website    { color: var(--pico-color-blue-400); }
-        .opp-automation { color: var(--pico-color-purple-400); }
-        .opp-both       { color: var(--pico-color-orange-400); }
-        .opp-low        { color: var(--pico-color-grey-500); }
-
-        /* Score breakdown collapsible */
-        details.score-breakdown summary { cursor: pointer; list-style: none; }
-        details.score-breakdown summary::-webkit-details-marker { display: none; }
-        details.score-breakdown[open] { background: var(--pico-card-background-color); border-radius: 4px; padding: 0.5rem; }
-        .breakdown-table { width: 100%; font-size: 0.8rem; margin-top: 0.4rem; }
-        .breakdown-table td { padding: 0.15rem 0.3rem; }
-    </style>
     {% block extra_style %}{% endblock %}
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <ul><li><strong>Lead Generator</strong></li></ul>
-            <ul>
-                <li><a href="/campaigns">Campaigns</a></li>
-                <li><a href="/businesses">Businesses</a></li>
-                <li><a href="/leads">Leads</a></li>
-            </ul>
+{% set current_path = request.url.path if request is defined else '' %}
+<div class="app-layout">
+
+    {# ── Sidebar ── #}
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/>
+                    <rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-name">LeadNexus Pro</div>
+                <span class="brand-tier">Enterprise</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item {% if current_path == '/' %}active{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/>
+                    <rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/campaigns" class="nav-item {% if current_path.startswith('/campaigns') %}active{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+                Campaigns
+            </a>
+            <a href="/businesses" class="nav-item {% if current_path.startswith('/businesses') %}active{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+                </svg>
+                Businesses
+            </a>
+            <a href="/leads" class="nav-item {% if current_path.startswith('/leads') %}active{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Leads
+            </a>
         </nav>
-    </header>
-    <main class="container">
+
+        <div class="sidebar-footer">
+            <a href="#" class="btn-upgrade">Upgrade Plan</a>
+            <a href="#" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+                </svg>
+                Help Center
+            </a>
+            <a href="#" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+                </svg>
+                Log Out
+            </a>
+        </div>
+
+    </aside>
+
+    {# ── Main area ── #}
+    <main class="main-content">
         {% block content %}{% endblock %}
     </main>
+
+</div>
 </body>
 </html>

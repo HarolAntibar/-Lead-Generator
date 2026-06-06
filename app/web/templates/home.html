@@ -1,260 +1,173 @@
 {% extends "base.html" %}
-{% block title %}Overview — Lead Generator{% endblock %}
-
-{% block extra_style %}
-<style>
-  /* ── Entrance ── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .fade-up { animation: fadeUp 0.4s ease-out both; }
-  .fade-up-1 { animation-delay: 0s; }
-  .fade-up-2 { animation-delay: 0.08s; }
-  .fade-up-3 { animation-delay: 0.16s; }
-  .fade-up-4 { animation-delay: 0.24s; }
-
-  /* ── Typography ── */
-  .brief-date {
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    color: var(--pico-color-grey-500);
-    margin: 0;
-  }
-  .brief-hero-number {
-    font-size: 4rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    margin: 0;
-  }
-  .brief-hero-label {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--pico-color-grey-500);
-    margin: 0.3rem 0 0 0;
-  }
-  .brief-section-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--pico-color-grey-400);
-    margin: 0 0 0.75rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--pico-table-border-color);
-  }
-
-  /* ── Rows ── */
-  .brief-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.45rem 0.4rem;
-    border-bottom: 1px solid var(--pico-table-border-color);
-    font-size: 0.9rem;
-    position: relative;
-    border-radius: 4px;
-    overflow: hidden;
-    transition: background 0.15s ease;
-  }
-  .brief-row:last-child { border-bottom: none; }
-  .brief-row:hover { background: rgba(128, 128, 128, 0.06); }
-
-  .brief-num {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    min-width: 2.2rem;
-    text-align: right;
-    position: relative; /* stay above bar */
-  }
-  .brief-rank {
-    font-size: 0.75rem;
-    color: var(--pico-color-grey-400);
-    min-width: 1.2rem;
-    font-variant-numeric: tabular-nums;
-    position: relative;
-  }
-  .brief-lead-name {
-    flex: 1;
-    margin: 0 0.75rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-    position: relative;
-  }
-
-  /* ── Proportion bar (Pipeline + Opportunity) ── */
-  @keyframes barFill {
-    from { width: 0; }
-    to   { width: var(--bar-w, 0%); }
-  }
-  .brief-row-bar::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: currentColor;
-    opacity: 0.07;
-    border-radius: 4px;
-    pointer-events: none;
-    width: var(--bar-w, 0%);
-    animation: barFill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: var(--bar-delay, 0.35s);
-  }
-
-  /* ── Recent runs ── */
-  .brief-run-row {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 0.6rem 0.4rem;
-    border-bottom: 1px solid var(--pico-table-border-color);
-    font-size: 0.88rem;
-    border-radius: 4px;
-    transition: background 0.15s ease;
-  }
-  .brief-run-row:last-child { border-bottom: none; }
-  .brief-run-row:hover { background: rgba(128, 128, 128, 0.06); }
-  .brief-run-name { flex: 1; font-weight: 500; }
-  .brief-run-meta { color: var(--pico-color-grey-500); font-size: 0.8rem; }
-
-  /* ── Status dot ── */
-  .status-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-right: 0.3rem;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
-  }
-  .status-dot-running {
-    background: var(--pico-color-blue-500);
-    animation: pulseDot 1.5s ease-out infinite;
-  }
-  @keyframes pulseDot {
-    0%   { box-shadow: 0 0 0 0 rgba(99, 170, 255, 0.55); }
-    65%  { box-shadow: 0 0 0 6px rgba(99, 170, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(99, 170, 255, 0); }
-  }
-  .status-dot-done    { background: var(--pico-color-green-500); }
-  .status-dot-error   { background: var(--pico-color-red-500); }
-  .status-dot-pending { background: var(--pico-color-grey-400); }
-
-  /* ── Reduced motion ── */
-  @media (prefers-reduced-motion: reduce) {
-    .fade-up               { animation: none; opacity: 1; transform: none; }
-    .brief-row-bar::before { animation: none; }
-    .status-dot-running    { animation: none; }
-  }
-</style>
-{% endblock %}
+{% block title %}Dashboard — LeadNexus Pro{% endblock %}
 
 {% block content %}
 
-{# ── Top bar: hero number left, date + CTA right ── #}
-<div class="fade-up fade-up-1" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2.5rem;">
-  <div>
-    <p class="brief-date">{{ today }}</p>
-    <p class="brief-hero-number" id="hero-counter" data-target="{{ stats.total }}">{{ stats.total }}</p>
-    <p class="brief-hero-label">leads in pipeline</p>
-  </div>
-  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem; padding-top:0.25rem;">
-    <a href="/campaigns" role="button" style="padding:0.4rem 1rem; font-size:0.85rem;">+ New campaign</a>
-    <a href="/leads" style="font-size:0.8rem; color:var(--pico-color-grey-500);">View all leads →</a>
-  </div>
-</div>
-
-{# ── Main grid: pipeline status + top opportunities ── #}
-<div class="grid fade-up fade-up-2" style="margin-bottom:1.5rem;">
-
-  <article style="margin:0;">
-    <p class="brief-section-label">Pipeline</p>
-    {% for s in all_statuses %}
-    {% set count = stats.by_status.get(s, 0) %}
-    {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
-    <div class="brief-row brief-row-bar" style="--bar-w:{{ pct }}%;">
-      <span class="lead-{{ s }}">{{ s | capitalize }}</span>
-      <span class="brief-num">{{ count }}</span>
+{# ── Page header ── #}
+<div class="page-header fade-up fade-up-1">
+    <div class="page-header-left">
+        <h1>Dashboard Overview</h1>
+        <p class="page-subtitle">Real-time pulse of your active pipeline and conversion metrics.</p>
     </div>
-    {% endfor %}
-    <div class="brief-row" style="margin-top:0.5rem; border-top:1px solid var(--pico-table-border-color);">
-      <span style="color:var(--pico-color-grey-500); font-size:0.8rem;">Total</span>
-      <span class="brief-num">{{ stats.total }}</span>
-    </div>
-  </article>
-
-  <article style="margin:0;">
-    <p class="brief-section-label">Top opportunities</p>
-    {% if top_leads %}
-      {% for lead in top_leads %}
-      <div class="brief-row">
-        <span class="brief-rank">{{ loop.index }}</span>
-        <a href="/leads/{{ lead.business_id }}" class="brief-lead-name" style="text-decoration:none; color:inherit;">
-          {{ lead.name }}
+    <div class="page-actions">
+        <a href="/campaigns" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            New Campaign
         </a>
-        <span class="brief-num {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
-          {{ lead.score }}
-        </span>
-      </div>
-      {% endfor %}
-    {% else %}
-      <p style="color:var(--pico-color-grey-400); font-size:0.88rem;">No leads scored yet. Run a campaign first.</p>
-    {% endif %}
-  </article>
+    </div>
+</div>
+
+{# ── Stat cards ── #}
+{% set ns = namespace(new_count=0, interested_count=0, client_count=0) %}
+{% for s in all_statuses %}
+    {% if s.value == 'new' %}{% set ns.new_count = stats.by_status.get(s, 0) %}{% endif %}
+    {% if s.value == 'interested' %}{% set ns.interested_count = stats.by_status.get(s, 0) %}{% endif %}
+    {% if s.value == 'client' %}{% set ns.client_count = stats.by_status.get(s, 0) %}{% endif %}
+{% endfor %}
+
+<div class="stat-cards fade-up fade-up-2">
+
+    {# Card 1 — Total leads, with background icon #}
+    <div class="stat-card" style="position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0.5rem; right:0.75rem; opacity:0.12; pointer-events:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nv-primary-dim);">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+        </div>
+        <div class="stat-card-label">Total Leads in Pipeline</div>
+        <div class="stat-card-value" id="hero-counter" data-target="{{ stats.total }}">{{ stats.total }}</div>
+        <div class="stat-card-trend">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+            {{ ns.new_count }} new leads
+        </div>
+    </div>
+
+    {# Card 2 — Interested #}
+    <div class="stat-card">
+        <div class="stat-card-label">Interested</div>
+        <div class="stat-card-value">{{ ns.interested_count }}</div>
+        <div class="stat-card-trend" style="color:var(--nv-text-muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Warm leads in pipeline
+        </div>
+    </div>
+
+    {# Card 3 — Converted clients #}
+    <div class="stat-card">
+        <div class="stat-card-label">Converted Clients</div>
+        <div class="stat-card-value">{{ ns.client_count }}</div>
+        <div class="stat-card-trend" style="color:var(--nv-text-muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+            Total closed deals
+        </div>
+    </div>
 
 </div>
 
-{# ── Opportunity breakdown ── #}
-<article class="fade-up fade-up-3" style="margin:0 0 1.5rem 0; max-width:340px;">
-  <p class="brief-section-label">By opportunity type</p>
-  {% for ot in all_opp_types %}
-  {% set count = stats.by_opp_type.get(ot, 0) %}
-  {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
-  <div class="brief-row brief-row-bar" style="--bar-w:{{ pct }}%;">
-    <span class="opp-{{ ot }}">{{ ot | capitalize }}</span>
-    <span class="brief-num">{{ count }}</span>
-  </div>
-  {% endfor %}
-</article>
+{# ── Main grid: pipeline + opportunities ── #}
+<div class="dashboard-grid fade-up fade-up-3">
+
+    {# Pipeline status #}
+    <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+            <h3 style="font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:1.1rem; font-weight:600; color:var(--nv-text); margin:0;">Pipeline Status</h3>
+            <a href="/leads" style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--nv-primary-dim); text-decoration:none;">View Full Funnel</a>
+        </div>
+        {% for s in all_statuses %}
+        {% set count = stats.by_status.get(s, 0) %}
+        {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
+        <div class="pipeline-row">
+            <span class="pipeline-label">{{ s.value | capitalize }}</span>
+            <div class="pipeline-bar-wrap">
+                <div class="pipeline-bar" style="width:{{ pct }}%;"></div>
+            </div>
+            <span class="pipeline-count">{{ count }} &nbsp;({{ pct }}%)</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    {# Top opportunities #}
+    <div class="card">
+        <h3 style="font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:1.1rem; font-weight:600; color:var(--nv-text); margin:0 0 1rem 0;">Top Opportunities</h3>
+        {% if top_leads %}
+            {% for lead in top_leads %}
+            {% set words = lead.name.split() %}
+            {% set initials = (words[0][0] if words|length > 0 else '?') + (words[1][0] if words|length > 1 else '') %}
+            <a href="/leads/{{ lead.business_id }}" class="opportunity-item" style="display:flex; text-decoration:none;">
+                <div class="opp-avatar">{{ initials | upper }}</div>
+                <div class="opp-info">
+                    <div class="opp-name">{{ lead.name }}</div>
+                    <div class="opp-sub">{{ lead.category or "—" }}</div>
+                </div>
+                <div style="text-align:right; flex-shrink:0;">
+                    <div class="opp-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                        {{ lead.score }}
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--nv-text-muted); margin-top:2px;">
+                        {% if lead.score >= 70 %}High Intent{% elif lead.score >= 40 %}In Review{% else %}Low Priority{% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+            <div style="margin-top:1rem;">
+                <a href="/leads" class="btn btn-ghost" style="width:100%; justify-content:center; font-size:0.8rem;">View All Opportunities</a>
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding:2rem 1rem;">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <p style="font-size:0.85rem; color:var(--nv-text-muted); margin:0;">No leads scored yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
 
 {# ── Recent runs ── #}
-<article class="fade-up fade-up-4" style="margin:0;">
-  <p class="brief-section-label">Recent runs</p>
-  {% if recent_runs %}
-    {% for run in recent_runs %}
-    <div class="brief-run-row">
-      <span class="brief-run-name">{{ run.campaign_name }}</span>
-      <span class="brief-run-meta status-{{ run.status.value }}">
-        <span class="status-dot status-dot-{{ run.status.value }}"></span>{{ run.status.value }}
-      </span>
-      <span class="brief-run-meta">{{ run.results_count }} results · {{ run.new_count }} new</span>
-      <a href="/campaigns/{{ run.campaign_id }}/runs/{{ run.run_id }}" style="font-size:0.8rem;">View →</a>
+<div class="card fade-up fade-up-4" style="margin-top:1rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <h3 style="font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:1.1rem; font-weight:600; color:var(--nv-text); margin:0;">Recent Campaign Runs</h3>
+        <a href="/campaigns" style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--nv-primary-dim); text-decoration:none;">View all</a>
     </div>
-    {% endfor %}
-  {% else %}
-    <p style="color:var(--pico-color-grey-400); font-size:0.88rem;">No runs yet. Start your first campaign.</p>
-  {% endif %}
-</article>
+    {% if recent_runs %}
+        {% for run in recent_runs %}
+        <div class="run-row">
+            <span class="run-name">{{ run.campaign_name }}</span>
+            <span class="run-meta status-{{ run.status.value }}">
+                <span class="status-dot status-dot-{{ run.status.value }}"></span>{{ run.status.value }}
+            </span>
+            <span class="run-meta">{{ run.results_count }} results &nbsp;·&nbsp; {{ run.new_count }} new</span>
+            <a href="/campaigns/{{ run.campaign_id }}/runs/{{ run.run_id }}" class="run-meta" style="color:var(--nv-primary-dim);">View →</a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color:var(--nv-text-muted); font-size:0.875rem; padding:1rem 0; margin:0;">
+            No runs yet. <a href="/campaigns">Start your first campaign</a>.
+        </p>
+    {% endif %}
+</div>
 
 <script>
 (function () {
-  const el = document.getElementById('hero-counter');
-  const target = parseInt(el.dataset.target, 10);
-  if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  el.textContent = '0';
-  const dur = Math.min(900, 250 + target * 10);
-  const start = performance.now();
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-  function tick(now) {
-    const p = Math.min((now - start) / dur, 1);
-    el.textContent = Math.round(easeOut(p) * target);
-    if (p < 1) requestAnimationFrame(tick);
-    else el.textContent = target;
-  }
-  requestAnimationFrame(tick);
+    const el = document.getElementById('hero-counter');
+    if (!el) return;
+    const target = parseInt(el.dataset.target, 10);
+    if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.textContent = '0';
+    const dur = Math.min(900, 250 + target * 10);
+    const start = performance.now();
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+    function tick(now) {
+        const p = Math.min((now - start) / dur, 1);
+        el.textContent = Math.round(easeOut(p) * target);
+        if (p < 1) requestAnimationFrame(tick);
+        else el.textContent = target;
+    }
+    requestAnimationFrame(tick);
 }());
 </script>
 

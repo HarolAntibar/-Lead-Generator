@@ -1,43 +1,114 @@
 {% extends "base.html" %}
-{% block title %}Businesses — Lead Generator{% endblock %}
+{% block title %}Businesses — LeadNexus Pro{% endblock %}
 
 {% block content %}
-<h2>Businesses</h2>
 
-<nav>
-    Sort by:
-    <a href="#"
-       hx-get="/businesses/table?sort_by=name{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
-       hx-target="#businesses-table"
-       hx-swap="outerHTML"
-       class="{% if sort_by == 'name' %}sort-active{% endif %}">
-        Name
-    </a>
-    &nbsp;|&nbsp;
-    <a href="#"
-       hx-get="/businesses/table?sort_by=rating{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
-       hx-target="#businesses-table"
-       hx-swap="outerHTML"
-       class="{% if sort_by == 'rating' %}sort-active{% endif %}">
-        Rating
-    </a>
-    &nbsp;|&nbsp;
-    {% if ref_lat and ref_lng %}
-    <a href="#"
-       hx-get="/businesses/table?sort_by=distance&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}"
-       hx-target="#businesses-table"
-       hx-swap="outerHTML"
-       class="{% if sort_by == 'distance' %}sort-active{% endif %}">
-        Distance
-    </a>
-    {% else %}
-    <span title="Provide a location bias in the campaign to sort by distance" style="color: var(--pico-color-grey-400)">
-        Distance (no reference point)
-    </span>
-    {% endif %}
-</nav>
+{# ── Page header ── #}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Businesses Search</h1>
+        <p class="page-subtitle">Discover and extract business leads across specific locations and categories.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/api/leads/export?format=xlsx" class="btn btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            Export
+        </a>
+        <a href="/campaigns" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            New Search
+        </a>
+    </div>
+</div>
 
-<br>
+{# ── Search & filters panel ── #}
+<div class="card" style="margin-bottom:1.25rem; padding:1.5rem;">
+    <div class="businesses-filter-panel">
 
-{% include "businesses/_table.html" %}
+        {# Search query — visual only (filtering happens via campaign) #}
+        <div class="filter-field businesses-filter-search">
+            <label class="filter-label">Search Query</label>
+            <div class="search-input-wrap" style="max-width:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="e.g. 'Coffee shops in Seattle'" disabled style="opacity:0.5; cursor:not-allowed;">
+            </div>
+        </div>
+
+        {# Sort By #}
+        <div class="filter-field" style="min-width:160px;">
+            <label class="filter-label">Sort By</label>
+            <div style="position:relative;">
+                <select id="sort-select" style="padding-right:2rem; appearance:none; -webkit-appearance:none;">
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name (A–Z)</option>
+                    <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating (High–Low)</option>
+                    {% if ref_lat and ref_lng %}
+                    <option value="distance" {% if sort_by == 'distance' %}selected{% endif %}>Distance</option>
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+
+        {# Filters button — sort links #}
+        <div class="filter-field" style="min-width:0; flex-shrink:0; justify-content:flex-end;">
+            <label class="filter-label">&nbsp;</label>
+            <div style="display:flex; gap:0.5rem;">
+                <a href="#"
+                   hx-get="/businesses/table?sort_by=name{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
+                   hx-target="#businesses-table"
+                   hx-swap="outerHTML"
+                   class="btn btn-ghost {% if sort_by == 'name' %}sort-active{% endif %}"
+                   style="padding:0.45rem 0.75rem; font-size:0.8rem;">
+                    Name
+                </a>
+                <a href="#"
+                   hx-get="/businesses/table?sort_by=rating{% if ref_lat %}&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}{% endif %}"
+                   hx-target="#businesses-table"
+                   hx-swap="outerHTML"
+                   class="btn btn-ghost {% if sort_by == 'rating' %}sort-active{% endif %}"
+                   style="padding:0.45rem 0.75rem; font-size:0.8rem;">
+                    Rating
+                </a>
+                {% if ref_lat and ref_lng %}
+                <a href="#"
+                   hx-get="/businesses/table?sort_by=distance&ref_lat={{ ref_lat }}&ref_lng={{ ref_lng }}"
+                   hx-target="#businesses-table"
+                   hx-swap="outerHTML"
+                   class="btn btn-ghost {% if sort_by == 'distance' %}sort-active{% endif %}"
+                   style="padding:0.45rem 0.75rem; font-size:0.8rem;">
+                    Distance
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{# ── Table or empty state ── #}
+{% if businesses %}
+<div class="card" style="padding:0; overflow:hidden;">
+    {% include "businesses/_table.html" %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state" style="padding:5rem 2rem; min-height:400px;">
+        <div class="empty-state-icon" style="width:64px; height:64px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" x2="22" y1="12" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                <path d="m9 5 3 3m0 8-3 3m6-14-3 3m0 8 3 3" opacity="0"/>
+            </svg>
+        </div>
+        <h3>No businesses found</h3>
+        <p>Run a search first to discover high-quality leads. Enter a category and location to get started.</p>
+        <a href="/campaigns" class="btn btn-primary">Start Searching</a>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

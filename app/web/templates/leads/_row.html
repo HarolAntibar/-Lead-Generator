@@ -1,68 +1,69 @@
+{% set words = lead.name.split() %}
+{% set initials = (words[0][0] if words|length > 0 else '?') + (words[1][0] if words|length > 1 else '') %}
 <tr id="lead-row-{{ lead.business_id }}">
-  <td><strong>{{ lead.name }}</strong></td>
-  <td>{{ lead.category or "—" }}</td>
-  <td>
-    {% set score = lead.score %}
-    {% if score >= 70 %}
-      {% set score_class = "score-high" %}
-    {% elif score >= 40 %}
-      {% set score_class = "score-medium" %}
-    {% else %}
-      {% set score_class = "score-low" %}
-    {% endif %}
-
-    <details class="score-breakdown">
-      <summary class="{{ score_class }}">{{ score }}</summary>
-      {% if lead.breakdown and lead.breakdown.components %}
-      <table class="breakdown-table">
-        {% for name, comp in lead.breakdown.components.items() %}
-        <tr>
-          <td>{{ name | replace("_", " ") | capitalize }}</td>
-          <td>{{ comp.points }}/{{ comp.max }}</td>
-          <td style="color:var(--pico-color-grey-500);">{{ comp.reason }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-      {% endif %}
-    </details>
-  </td>
-  <td>
-    {% set ot = lead.opportunity_type or "—" %}
-    {% if ot == "website" %}
-      <span class="opp-website">website</span>
-    {% elif ot == "automation" %}
-      <span class="opp-automation">automation</span>
-    {% elif ot == "both" %}
-      <span class="opp-both">both</span>
-    {% elif ot == "low" %}
-      <span class="opp-low">low</span>
-    {% else %}
-      {{ ot }}
-    {% endif %}
-  </td>
-  <td>
-    <select
-      name="status"
-      hx-patch="/leads/{{ lead.business_id }}/status"
-      hx-target="#lead-row-{{ lead.business_id }}"
-      hx-swap="outerHTML"
-      hx-include="this"
-      class="lead-{{ lead.status.value }}"
-      style="border:none; background:transparent; padding:0; font-size:inherit; cursor:pointer;"
-    >
-      {% for s in all_statuses %}
-        <option value="{{ s.value }}" {% if s == lead.status %}selected{% endif %}>
-          {{ s.value | capitalize }}
-        </option>
-      {% endfor %}
-    </select>
-  </td>
-  <td>
-    {% if lead.website_url %}
-      <a href="{{ lead.website_url }}" target="_blank" rel="noopener">Link</a>
-    {% else %}
-      <span style="color:var(--pico-color-orange-500);">No website</span>
-    {% endif %}
-  </td>
-  <td><a href="/leads/{{ lead.business_id }}" role="button" class="outline" style="padding:0.2rem 0.6rem; font-size:0.85rem;">Ver</a></td>
+    <td>
+        <div class="lead-cell">
+            <div class="lead-avatar" style="border-radius:50%;">{{ initials | upper }}</div>
+            <div>
+                <div class="lead-contact-name">{{ lead.name }}</div>
+                {% if lead.website_url %}
+                    <div class="lead-contact-email">{{ lead.website_url | truncate(30, True) }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+    <td>
+        <div style="font-size:0.85rem; color:var(--nv-text);">{{ lead.name }}</div>
+        <div style="font-size:0.75rem; color:var(--nv-text-muted);">{{ lead.category or "—" }}</div>
+    </td>
+    <td>
+        {% if lead.score >= 70 %}
+            {% set score_class = "score-high" %}
+        {% elif lead.score >= 40 %}
+            {% set score_class = "score-medium" %}
+        {% else %}
+            {% set score_class = "score-low" %}
+        {% endif %}
+        <details class="score-breakdown">
+            <summary class="{{ score_class }}">{{ lead.score }}</summary>
+            {% if lead.breakdown and lead.breakdown.components %}
+            <table class="breakdown-table">
+                {% for name, comp in lead.breakdown.components.items() %}
+                <tr>
+                    <td>{{ name | replace("_", " ") | capitalize }}</td>
+                    <td>{{ comp.points }}/{{ comp.max }}</td>
+                    <td style="color:var(--nv-text-muted);">{{ comp.reason }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+        </details>
+    </td>
+    <td>
+        {% set ot = lead.opportunity_type or "low" %}
+        {% if ot == "website" %}   <span class="chip chip-website">website</span>
+        {% elif ot == "automation" %}<span class="chip chip-automation">automation</span>
+        {% elif ot == "both" %}    <span class="chip chip-both">both</span>
+        {% else %}                 <span class="chip chip-low">low</span>
+        {% endif %}
+    </td>
+    <td>
+        <select
+            name="status"
+            hx-patch="/leads/{{ lead.business_id }}/status"
+            hx-target="#lead-row-{{ lead.business_id }}"
+            hx-swap="outerHTML"
+            hx-include="this"
+            style="border:none; background:transparent; padding:0; font-size:0.82rem; cursor:pointer; color:inherit; min-width:90px;"
+        >
+            {% for s in all_statuses %}
+                <option value="{{ s.value }}" {% if s == lead.status %}selected{% endif %}>
+                    {{ s.value | capitalize }}
+                </option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <a href="/leads/{{ lead.business_id }}" class="btn btn-ghost" style="padding:0.25rem 0.65rem; font-size:0.78rem;">View</a>
+    </td>
 </tr>

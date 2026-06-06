@@ -3,6 +3,10 @@
 
 # Internal design documents — not for public exposure
 PLAN.md
+DESIGN.MD
+
+# Stitch design references — internal only
+stitch_new_project/
 
 # Virtual environment
 .venv/

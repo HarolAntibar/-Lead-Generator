@@ -1,53 +1,86 @@
 {% extends "base.html" %}
-{% block title %}{{ campaign.name }} — Lead Generator{% endblock %}
+{% block title %}{{ campaign.name }} — LeadNexus Pro{% endblock %}
 
 {% block content %}
-<a href="/campaigns">Back to campaigns</a>
 
-<h2>{{ campaign.name }}</h2>
-<p>
-    <strong>Area:</strong> {{ campaign.area_text }} &nbsp;
-    <strong>Business type:</strong> {{ campaign.business_type }}
-    {% if campaign.params and campaign.params.location_bias %}
-    &nbsp; <strong>Location bias:</strong>
-    {{ campaign.params.location_bias.lat }}, {{ campaign.params.location_bias.lng }}
-    ({{ campaign.params.location_bias.radius_meters }}m)
-    {% endif %}
-</p>
+{# ── Page header ── #}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="margin-bottom:0.5rem;">
+            <a href="/campaigns" style="font-size:0.82rem; color:var(--nv-text-muted);">
+                ← Campaigns
+            </a>
+        </div>
+        <h1>{{ campaign.name }}</h1>
+        <p class="page-subtitle">
+            {{ campaign.area_text }} &nbsp;·&nbsp; {{ campaign.business_type }}
+            {% if campaign.params and campaign.params.location_bias %}
+            &nbsp;·&nbsp; {{ campaign.params.location_bias.lat }}, {{ campaign.params.location_bias.lng }}
+            ({{ campaign.params.location_bias.radius_meters }}m)
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <form method="post" action="/campaigns/{{ campaign.id }}/runs" style="margin:0;">
+            <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="6 3 20 12 6 21 6 3"/>
+                </svg>
+                Run Search
+            </button>
+        </form>
+    </div>
+</div>
 
-<form method="post" action="/campaigns/{{ campaign.id }}/runs">
-    <button type="submit">Run search</button>
-</form>
-
-<h3>Search runs</h3>
+{# ── Runs table ── #}
 {% if runs %}
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Status</th>
-            <th>Results</th>
-            <th>New</th>
-            <th>Cost (USD)</th>
-            <th>Started</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for run in runs %}
-        <tr>
-            <td>{{ run.id }}</td>
-            <td class="status-{{ run.status }}">{{ run.status }}</td>
-            <td>{{ run.results_count }}</td>
-            <td>{{ run.new_count }}</td>
-            <td>{% if run.api_cost_est %}${{ "%.4f" | format(run.api_cost_est) }}{% else %}—{% endif %}</td>
-            <td>{{ run.started_at or "—" }}</td>
-            <td><a href="/campaigns/{{ campaign.id }}/runs/{{ run.id }}">Detail</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card" style="padding:0; overflow:hidden;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Run ID</th>
+                <th>Status</th>
+                <th>Results</th>
+                <th>New</th>
+                <th>Cost (USD)</th>
+                <th>Started</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--nv-text-muted);">{{ run.id }}</td>
+                <td>
+                    <span class="status-dot status-dot-{{ run.status }}"></span>
+                    <span class="status-{{ run.status }}">{{ run.status }}</span>
+                </td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">{{ run.results_count }}</td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">{{ run.new_count }}</td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--nv-text-muted);">
+                    {% if run.api_cost_est %}${{ "%.4f" | format(run.api_cost_est) }}{% else %}—{% endif %}
+                </td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--nv-text-muted);">{{ run.started_at or "—" }}</td>
+                <td>
+                    <a href="/campaigns/{{ campaign.id }}/runs/{{ run.id }}" class="btn btn-ghost" style="padding:0.25rem 0.65rem; font-size:0.78rem;">Detail</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% else %}
-<p>No runs yet. Click "Run search" to start.</p>
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="6 3 20 12 6 21 6 3"/>
+            </svg>
+        </div>
+        <h3>No runs yet</h3>
+        <p>Click "Run Search" above to start finding businesses in {{ campaign.area_text }}.</p>
+    </div>
+</div>
 {% endif %}
+
 {% endblock %}

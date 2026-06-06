@@ -1,65 +1,115 @@
 {% extends "base.html" %}
-{% block title %}Campaigns — Lead Generator{% endblock %}
+{% block title %}Campaigns — LeadNexus Pro{% endblock %}
 
 {% block content %}
-<h2>Campaigns</h2>
 
-<details>
-    <summary>New campaign</summary>
-    <form method="post" action="/campaigns">
-        <label>Name
-            <input type="text" name="name" required placeholder="e.g. Bogota restaurants Q3">
-        </label>
-        <label>Area
-            <input type="text" name="area_text" required placeholder="e.g. Bogota, Colombia">
-        </label>
-        <label>Business type
-            <input type="text" name="business_type" required placeholder="e.g. restaurants">
-        </label>
-        <fieldset>
-            <legend>Location bias (optional)</legend>
-            <div class="grid">
-                <label>Latitude
-                    <input type="number" name="lat" step="any" placeholder="e.g. 4.711">
-                </label>
-                <label>Longitude
-                    <input type="number" name="lng" step="any" placeholder="e.g. -74.072">
-                </label>
-                <label>Radius (m)
-                    <input type="number" name="radius_meters" placeholder="5000">
-                </label>
-            </div>
-        </fieldset>
-        <button type="submit">Create</button>
-    </form>
-</details>
+{# ── Page header ── #}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Campaigns</h1>
+        <p class="page-subtitle">Manage your outreach strategies and monitor active lead generation funnels.</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('new-campaign-form').scrollIntoView({behavior:'smooth'})">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            Filter
+        </button>
+        <button class="btn btn-primary" onclick="document.getElementById('new-campaign-form').scrollIntoView({behavior:'smooth'})">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Create Campaign
+        </button>
+    </div>
+</div>
 
-<br>
-
+{# ── Campaigns list or empty state ── #}
 {% if campaigns %}
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Area</th>
-            <th>Business type</th>
-            <th>Created</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for c in campaigns %}
-        <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.area_text }}</td>
-            <td>{{ c.business_type }}</td>
-            <td>{{ c.created_at.strftime("%Y-%m-%d") }}</td>
-            <td><a href="/campaigns/{{ c.id }}">View</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card" style="padding:0; overflow:hidden; margin-bottom:1.25rem;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Area</th>
+                <th>Business type</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in campaigns %}
+            <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td style="color:var(--nv-text-muted);">{{ c.area_text }}</td>
+                <td style="color:var(--nv-text-muted);">{{ c.business_type }}</td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--nv-text-muted);">
+                    {{ c.created_at.strftime("%Y-%m-%d") }}
+                </td>
+                <td><a href="/campaigns/{{ c.id }}" class="btn btn-ghost" style="padding:0.25rem 0.65rem; font-size:0.78rem;">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% else %}
-<p>No campaigns yet. Create one above.</p>
+{# Large empty state matching Stitch design #}
+<div class="campaign-empty-state">
+    <div class="campaign-empty-glow campaign-empty-glow-top"></div>
+    <div class="campaign-empty-glow campaign-empty-glow-bottom"></div>
+    <div class="campaign-empty-icon-wrap">
+        <div class="campaign-empty-pulse"></div>
+        <div class="campaign-empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--nv-primary-dim);">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+            </svg>
+        </div>
+    </div>
+    <h3>No campaigns yet</h3>
+    <p>You haven't set up any lead generation campaigns. Start building your funnel to capture high-value prospects.</p>
+    <button class="btn campaign-empty-btn" onclick="document.getElementById('new-campaign-form').scrollIntoView({behavior:'smooth'})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/></svg>
+        Launch First Campaign
+    </button>
+</div>
 {% endif %}
+
+{# ── New campaign form ── #}
+<div class="card" id="new-campaign-form">
+    <div class="card-header">New Campaign</div>
+    <form method="post" action="/campaigns">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+            <div class="input-group">
+                <label>Name</label>
+                <input type="text" name="name" required placeholder="e.g. Bogota Restaurants Q3">
+            </div>
+            <div class="input-group">
+                <label>Area</label>
+                <input type="text" name="area_text" required placeholder="e.g. Bogota, Colombia">
+            </div>
+            <div class="input-group">
+                <label>Business type</label>
+                <input type="text" name="business_type" required placeholder="e.g. restaurants">
+            </div>
+        </div>
+        <details style="margin-bottom:0.75rem;">
+            <summary style="font-size:0.82rem; color:var(--nv-text-muted); cursor:pointer; list-style:none;">
+                + Location bias (optional)
+            </summary>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-top:0.75rem;">
+                <div class="input-group">
+                    <label>Latitude</label>
+                    <input type="number" name="lat" step="any" placeholder="e.g. 4.711">
+                </div>
+                <div class="input-group">
+                    <label>Longitude</label>
+                    <input type="number" name="lng" step="any" placeholder="e.g. -74.072">
+                </div>
+                <div class="input-group">
+                    <label>Radius (m)</label>
+                    <input type="number" name="radius_meters" placeholder="5000">
+                </div>
+            </div>
+        </details>
+        <button type="submit" class="btn btn-primary">Create Campaign</button>
+    </form>
+</div>
+
 {% endblock %}

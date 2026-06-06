@@ -27,7 +27,7 @@
           {% if business.website_url %}
             <a href="{{ business.website_url }}" target="_blank" rel="noopener">{{ business.website_url }}</a>
           {% else %}
-            <span style="color:var(--pico-color-orange-500);">No website</span>
+            <span style="color:var(--nv-warning);">No website</span>
           {% endif %}
         </td>
       </tr>
@@ -64,7 +64,7 @@
           <td>{{ c.name or "—" }}</td>
           <td>{{ c.email or "—" }}</td>
           <td>{{ c.role or "—" }}</td>
-          <td style="font-size:0.8rem; color:var(--pico-color-grey-500);">{{ c.source.value if c.source else "—" }}</td>
+          <td style="font-size:0.8rem; color:var(--nv-text-muted);">{{ c.source.value if c.source else "—" }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -105,7 +105,7 @@
           <tr>
             <td>{{ name | replace("_", " ") | capitalize }}</td>
             <td><strong>{{ comp.points }}</strong>/{{ comp.max }}</td>
-            <td style="color:var(--pico-color-grey-500);">{{ comp.reason }}</td>
+            <td style="color:var(--nv-text-muted);">{{ comp.reason }}</td>
           </tr>
           {% endfor %}
         </table>
@@ -144,14 +144,14 @@
           <summary>
             {{ draft.channel.value | capitalize }}
             {% if draft.subject %} — {{ draft.subject }}{% endif %}
-            <small style="color:var(--pico-color-grey-500);">{{ draft.created_at.strftime('%d %b %Y') if draft.created_at else "" }}</small>
+            <small style="color:var(--nv-text-muted);">{{ draft.created_at.strftime('%d %b %Y') if draft.created_at else "" }}</small>
           </summary>
           {% if draft.subject %}<p><strong>Subject:</strong> {{ draft.subject }}</p>{% endif %}
           <pre style="white-space:pre-wrap; font-size:0.85rem;">{{ draft.body }}</pre>
         </details>
         {% endfor %}
       {% else %}
-        <p style="color:var(--pico-color-grey-500);">No drafts yet.</p>
+        <p style="color:var(--nv-text-muted);">No drafts yet.</p>
       {% endif %}
       <a href="/api/drafts/{{ lead.business_id }}" role="button" class="outline" style="font-size:0.85rem;">Generate draft (API)</a>
     </article>
