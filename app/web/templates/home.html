@@ -74,15 +74,13 @@
             <h3 style="font-family:'Hanken Grotesk',system-ui,sans-serif; font-size:1.1rem; font-weight:600; color:var(--nv-text); margin:0;">Pipeline Status</h3>
             <a href="/leads" style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--nv-primary-dim); text-decoration:none;">View Full Funnel</a>
         </div>
-        {% for s in all_statuses %}
-        {% set count = stats.by_status.get(s, 0) %}
-        {% set pct = ((count / stats.total * 100) | round | int) if stats.total > 0 else 0 %}
+        {% for bar in pipeline_bars %}
         <div class="pipeline-row">
-            <span class="pipeline-label">{{ s.value | capitalize }}</span>
+            <span class="pipeline-label">{{ bar.label }}</span>
             <div class="pipeline-bar-wrap">
-                <div class="pipeline-bar" style="width:{{ pct }}%;"></div>
+                <div class="pipeline-bar" style="width:{{ bar.pct }}%;"></div>
             </div>
-            <span class="pipeline-count">{{ count }} &nbsp;({{ pct }}%)</span>
+            <span class="pipeline-count">{{ bar.count }} &nbsp;({{ bar.pct }}%)</span>
         </div>
         {% endfor %}
     </div>
@@ -101,7 +99,7 @@
                     <div class="opp-sub">{{ lead.category or "—" }}</div>
                 </div>
                 <div style="text-align:right; flex-shrink:0;">
-                    <div class="opp-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                    <div class="opp-score {{ lead.score | score_class }}">
                         {{ lead.score }}
                     </div>
                     <div style="font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--nv-text-muted); margin-top:2px;">

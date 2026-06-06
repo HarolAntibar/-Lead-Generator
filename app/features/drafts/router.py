@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_session
 from app.core.rate_limit import limiter
+from app.features.drafts.exceptions import DraftGenerationError
 from app.features.drafts.schemas import DraftOut, DraftRequest
-from app.features.drafts.service import DraftGenerationError, generate_draft, list_drafts
+from app.features.drafts.service import generate_draft, list_drafts
 
 router = APIRouter(prefix="/api/drafts", tags=["drafts"])
 

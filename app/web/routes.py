@@ -28,6 +28,17 @@ from app.web.constants import (
 templates = Jinja2Templates(directory="app/web/templates")
 router = APIRouter(tags=["web"])
 
+
+def _score_class(score: int) -> str:
+    if score >= 70:
+        return "score-high"
+    if score >= 40:
+        return "score-medium"
+    return "score-low"
+
+
+templates.env.filters["score_class"] = _score_class
+
 _settings = get_settings()
 
 
@@ -38,13 +49,24 @@ async def home(request: Request, session: SessionDep) -> HTMLResponse:
         session, page=1, size=WEB_HOME_TOP_LEADS, has_website=None,
     )
     recent_runs = await campaign_service.list_recent_runs(session, limit=WEB_HOME_RECENT_RUNS)
+
+    total = stats.total or 1  # avoid division by zero
+    pipeline_bars = [
+        {
+            "label": s.value.capitalize(),
+            "count": stats.by_status.get(s, 0),
+            "pct": round(stats.by_status.get(s, 0) / total * 100),
+        }
+        for s in LeadStatusChoice
+    ]
+
     return templates.TemplateResponse(request, "home.html", {
         "stats": stats,
+        "pipeline_bars": pipeline_bars,
         "top_leads": top_leads,
         "recent_runs": recent_runs,
         "today": date.today().strftime("%A, %d %b %Y"),
-        "all_statuses": [s.value for s in LeadStatusChoice],
-        "all_opp_types": list(OpportunityType),
+        "all_statuses": list(LeadStatusChoice),
     })
 
 

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Float, cast, select
+from sqlalchemy import Float, Select, cast, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -138,7 +138,7 @@ async def get_stats(session: AsyncSession) -> dict:
     return {"total": total, "by_status": by_status, "by_opp_type": by_opp_type}
 
 
-def _leads_select_query():
+def _leads_select_query() -> Select:
     """Base SELECT joining businesses + lead_scores + lead_status.
 
     Extracted so list_leads and get_single_lead share the same column set

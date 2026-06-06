@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.features.businesses import repository as businesses_repo
 from app.features.drafts import repository as drafts_repo
+from app.features.drafts.constants import DEFAULT_OPPORTUNITY_TYPE
+from app.features.drafts.exceptions import DraftGenerationError
 from app.features.drafts.models import DraftChannel, MessageDraft
 from app.features.drafts.schemas import DraftOut
 from app.features.leads import repository as leads_repo
@@ -17,10 +19,6 @@ from app.integrations.llm.client import get_llm_client
 from app.integrations.llm.prompts import DRAFT_SYSTEM_PROMPT, build_draft_prompt
 
 logger = logging.getLogger(__name__)
-
-
-class DraftGenerationError(Exception):
-    """Raised when the LLM call fails or times out."""
 
 
 async def generate_draft(
@@ -48,9 +46,9 @@ async def generate_draft(
     # This is the final refined type (website/automation/both/low), not the raw
     # tech detection output — so it already accounts for automation signal gaps.
     lead_score = await leads_repo.get_lead_score(session, business_id)
-    opportunity_type = "website"
+    opportunity_type = DEFAULT_OPPORTUNITY_TYPE
     if lead_score and lead_score.breakdown:
-        opportunity_type = lead_score.breakdown.get("opportunity_type", "website")
+        opportunity_type = lead_score.breakdown.get("opportunity_type", DEFAULT_OPPORTUNITY_TYPE)
 
     # --- Build prompt and call LLM ---------------------------------------------
     user_prompt = build_draft_prompt(

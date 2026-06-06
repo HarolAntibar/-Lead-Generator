@@ -17,15 +17,8 @@
         <div style="font-size:0.75rem; color:var(--nv-text-muted);">{{ lead.category or "—" }}</div>
     </td>
     <td>
-        {% if lead.score >= 70 %}
-            {% set score_class = "score-high" %}
-        {% elif lead.score >= 40 %}
-            {% set score_class = "score-medium" %}
-        {% else %}
-            {% set score_class = "score-low" %}
-        {% endif %}
         <details class="score-breakdown">
-            <summary class="{{ score_class }}">{{ lead.score }}</summary>
+            <summary class="{{ lead.score | score_class }}">{{ lead.score }}</summary>
             {% if lead.breakdown and lead.breakdown.components %}
             <table class="breakdown-table">
                 {% for name, comp in lead.breakdown.components.items() %}

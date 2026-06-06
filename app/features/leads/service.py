@@ -4,7 +4,6 @@ from app.core.config import get_settings
 from app.features.businesses.models import Business, WebsiteAnalysis
 from app.features.leads import repository as leads_repo
 from app.features.leads.models import LeadScore, LeadStatus, LeadStatusChoice
-from app.features.leads.schemas import LeadStatusUpdate
 from app.features.leads.schemas import LeadOut, LeadStatusUpdate
 from app.pipeline.scoring import compute_score
 
