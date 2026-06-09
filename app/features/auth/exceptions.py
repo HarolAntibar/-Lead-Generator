@@ -2,6 +2,10 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.features.auth.constants import USER_RESOURCE_NAME
 
 
+class NotAuthenticatedException(Exception):
+    pass
+
+
 class UserNotFoundError(NotFoundError):
     def __init__(self, identifier: int | str) -> None:
         super().__init__(USER_RESOURCE_NAME, identifier)

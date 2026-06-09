@@ -12,6 +12,7 @@ from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
 from app.core.rate_limit import limiter
 from app.features.auth import models as _auth_models  # noqa: F401 — registers User in SQLAlchemy metadata
+from app.features.auth.router import router as auth_router
 from app.features.businesses.router import router as businesses_router
 from app.features.campaigns.router import router as campaigns_router
 from app.features.drafts.router import router as drafts_router
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory="app/web/static"), name="static")
 
+    app.include_router(auth_router)
     app.include_router(web_router)
     app.include_router(campaigns_router)
     app.include_router(businesses_router)

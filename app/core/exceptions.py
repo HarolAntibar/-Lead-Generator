@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 
 class NotFoundError(Exception):
@@ -60,10 +60,20 @@ async def _permission_denied_handler(request: Request, exc: Exception) -> JSONRe
     )
 
 
+async def _not_authenticated_handler(
+    request: Request, exc: Exception
+) -> JSONResponse | RedirectResponse:
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+    next_path = request.url.path
+    return RedirectResponse(f"/auth/login?next={next_path}", status_code=303)
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     from app.features.auth.exceptions import (
         InactiveUserError,
         InvalidCredentialsError,
+        NotAuthenticatedException,
         PermissionDeniedError,
     )
 
@@ -73,3 +83,4 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(InvalidCredentialsError, _invalid_credentials_handler)
     app.add_exception_handler(InactiveUserError, _inactive_user_handler)
     app.add_exception_handler(PermissionDeniedError, _permission_denied_handler)
+    app.add_exception_handler(NotAuthenticatedException, _not_authenticated_handler)

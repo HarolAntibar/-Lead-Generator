@@ -1,12 +1,13 @@
 from datetime import date
 
-from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.core.config import get_settings
 from app.core.dependencies import SessionDep
 from app.core.rate_limit import limiter
+from app.features.auth.dependencies import get_current_user
 from app.features.businesses import service as business_service
 from app.features.businesses.constants import BusinessSortBy
 from app.features.campaigns import service as campaign_service
@@ -26,7 +27,7 @@ from app.web.constants import (
 )
 
 templates = Jinja2Templates(directory="app/web/templates")
-router = APIRouter(tags=["web"])
+router = APIRouter(tags=["web"], dependencies=[Depends(get_current_user)])
 
 
 def _score_class(score: int) -> str:
@@ -50,12 +51,12 @@ async def home(request: Request, session: SessionDep) -> HTMLResponse:
     )
     recent_runs = await campaign_service.list_recent_runs(session, limit=WEB_HOME_RECENT_RUNS)
 
-    total = stats.total or 1  # avoid division by zero
+    total = stats["total"] or 1  # avoid division by zero
     pipeline_bars = [
         {
             "label": s.value.capitalize(),
-            "count": stats.by_status.get(s, 0),
-            "pct": round(stats.by_status.get(s, 0) / total * 100),
+            "count": stats["by_status"].get(s, 0),
+            "pct": round(stats["by_status"].get(s, 0) / total * 100),
         }
         for s in LeadStatusChoice
     ]

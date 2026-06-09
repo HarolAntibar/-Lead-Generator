@@ -7,6 +7,7 @@
 
 /* ── Tokens ────────────────────────────────────────────────────────────────── */
 :root {
+  font-size: 87.5%; /* 14px base — scales all rem values proportionally */
   --nv-bg:              #10131f;
   --nv-sidebar-bg:      #0b0d1a;
   --nv-surface-low:     #191b28;
@@ -956,4 +957,36 @@ details.score-breakdown[open] {
   .fade-up { animation: none; opacity: 1; transform: none; }
   .status-dot-running { animation: none; }
   .pipeline-bar { transition: none; }
+}
+
+/* ── Sidebar user block ────────────────────────────────────────────────────── */
+.sidebar-user {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--nv-surface-low);
+  margin-bottom: 0.5rem;
+}
+.sidebar-user-email {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--nv-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-role {
+  font-size: 0.65rem;
+  color: var(--nv-primary-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+.sidebar-logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  font: inherit;
 }
