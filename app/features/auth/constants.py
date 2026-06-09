@@ -1,0 +1,2 @@
+USER_RESOURCE_NAME = "User"
+SESSION_USER_ID_KEY = "user_id"

@@ -39,7 +39,37 @@ async def _external_service_handler(
     )
 
 
+async def _invalid_credentials_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Invalid email or password"},
+    )
+
+
+async def _inactive_user_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "Account is disabled"},
+    )
+
+
+async def _permission_denied_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "You do not have permission to perform this action"},
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
+    from app.features.auth.exceptions import (
+        InactiveUserError,
+        InvalidCredentialsError,
+        PermissionDeniedError,
+    )
+
     app.add_exception_handler(NotFoundError, _not_found_handler)
     app.add_exception_handler(ConflictError, _conflict_handler)
     app.add_exception_handler(ExternalServiceError, _external_service_handler)
+    app.add_exception_handler(InvalidCredentialsError, _invalid_credentials_handler)
+    app.add_exception_handler(InactiveUserError, _inactive_user_handler)
+    app.add_exception_handler(PermissionDeniedError, _permission_denied_handler)
